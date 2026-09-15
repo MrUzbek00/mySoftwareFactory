@@ -21,9 +21,42 @@ agents that operate inside future Software Factory systems.
    v
    isolate-task
 
-4. STOP
+4. Implement
+   |
+   v
+   implement-change
 
-Implementation is outside the current MVP.
+5. Validate
+   |
+   v
+   validate-change
+
+6. Verify and harden
+   |
+   v
+   before-after
+   security-review
+   update-documentation
+
+7. Publish
+   |
+   v
+   create-pull-request
+
+8. Review and revise
+   |
+   v
+   review-pull-request
+   revise-pull-request
+
+9. Close
+   |
+   v
+   completion-report
+
+10. STOP
+
+Merging and deployment are outside this workflow.
 ```
 
 No implementation work may start before:
@@ -31,6 +64,11 @@ No implementation work may start before:
 - repository inspection is complete,
 - a change plan exists,
 - an isolated task workspace exists.
+
+No pull request may be opened before:
+
+- validation has passed,
+- no CRITICAL security finding stands.
 
 ## Global Rules
 
@@ -43,6 +81,11 @@ Agents MUST:
 - understand current behavior before planning changes,
 - minimize unrelated modifications,
 - create isolated Git branches and worktrees,
+- implement only what an approved plan describes,
+- capture test and lint results with the validation script,
+- scan every change for secrets before publishing it,
+- persist each stage artifact so the work can be audited,
+- stop at the merge and hand the decision to a human,
 - produce structured outputs,
 - report uncertainty,
 - escalate when prerequisites are missing.
@@ -62,7 +105,16 @@ Agents MUST NOT:
 - merge pull requests,
 - deploy production systems,
 - access production credentials,
-- implement code during the current MVP workflow.
+- implement code before an approved plan and an isolated workspace exist,
+- write outside the task worktree during implementation,
+- weaken, skip, or delete a test to reach a passing result,
+- report a check as passing without a recorded exit code of zero,
+- open a pull request from a protected branch or without passing validation,
+- publish a change carrying a CRITICAL security finding,
+- reproduce secret material in any report, message, or pull request body,
+- force push or rewrite a branch that is under review,
+- post a review comment that the user did not ask for,
+- report a completion status that contradicts the artifacts.
 
 ## Deterministic Operations
 
