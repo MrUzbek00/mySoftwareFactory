@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/software-factory-skills/change-plan.schema.json",
+  "title": "ChangePlan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "task_id",
+    "goal",
+    "current_behavior",
+    "desired_behavior",
+    "affected_components",
+    "affected_files",
+    "public_contract_changes",
+    "database_changes",
+    "configuration_changes",
+    "implementation_steps",
+    "test_plan",
+    "risks",
+    "dependencies",
+    "unknowns",
+    "risk_level",
+    "requires_human_approval",
+    "approval_reason",
+    "ready_for_isolation"
+  ],
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "pattern": "^TASK-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+    },
+    "goal": { "type": "string" },
+    "current_behavior": { "type": "string" },
+    "desired_behavior": { "type": "string" },
+    "affected_components": { "$ref": "#/$defs/stringArray" },
+    "affected_files": { "$ref": "#/$defs/stringArray" },
+    "public_contract_changes": { "$ref": "#/$defs/stringArray" },
+    "database_changes": { "$ref": "#/$defs/stringArray" },
+    "configuration_changes": { "$ref": "#/$defs/stringArray" },
+    "implementation_steps": { "$ref": "#/$defs/stringArray" },
+    "test_plan": { "$ref": "#/$defs/stringArray" },
+    "risks": { "$ref": "#/$defs/stringArray" },
+    "dependencies": { "$ref": "#/$defs/stringArray" },
+    "unknowns": { "$ref": "#/$defs/stringArray" },
+    "risk_level": {
+      "type": "string",
+      "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+    },
+    "requires_human_approval": { "type": "boolean" },
+    "approval_reason": {
+      "type": ["string", "null"]
+    },
+    "ready_for_isolation": { "type": "boolean" }
+  },
+  "$defs": {
+    "stringArray": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}
