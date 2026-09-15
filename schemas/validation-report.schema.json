@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/software-factory-skills/validation-report.schema.json",
+  "title": "ValidationReport",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "status",
+    "task_id",
+    "branch",
+    "worktree_path",
+    "base_branch",
+    "head_commit",
+    "checks",
+    "diff_summary",
+    "ready_for_pull_request",
+    "generated_at"
+  ],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["pass", "fail"]
+    },
+    "task_id": {
+      "type": "string",
+      "pattern": "^TASK-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+    },
+    "branch": { "type": "string", "minLength": 1 },
+    "worktree_path": { "type": "string", "minLength": 1 },
+    "base_branch": { "type": "string", "minLength": 1 },
+    "head_commit": { "type": "string", "minLength": 1 },
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "command",
+          "status",
+          "exit_code",
+          "duration_seconds",
+          "output_tail"
+        ],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "command": { "type": "string", "minLength": 1 },
+          "status": {
+            "type": "string",
+            "enum": ["pass", "fail", "timeout", "not_run"]
+          },
+          "exit_code": { "type": ["integer", "null"] },
+          "duration_seconds": { "type": "number", "minimum": 0 },
+          "output_tail": { "type": "string" }
+        }
+      }
+    },
+    "diff_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["files_changed", "insertions", "deletions"],
+      "properties": {
+        "files_changed": { "type": "integer", "minimum": 0 },
+        "insertions": { "type": "integer", "minimum": 0 },
+        "deletions": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "ready_for_pull_request": { "type": "boolean" },
+    "generated_at": { "type": "string", "format": "date-time" }
+  }
+}

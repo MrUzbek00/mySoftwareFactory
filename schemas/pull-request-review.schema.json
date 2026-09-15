@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/software-factory-skills/pull-request-review.schema.json",
+  "title": "PullRequestReview",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "status",
+    "pull_request_number",
+    "pull_request_url",
+    "branch",
+    "base_branch",
+    "head_commit",
+    "verdict",
+    "findings",
+    "checks",
+    "unresolved_threads",
+    "generated_at"
+  ],
+  "properties": {
+    "status": { "type": "string", "enum": ["reviewed"] },
+    "task_id": {
+      "type": ["string", "null"],
+      "pattern": "^TASK-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+    },
+    "pull_request_number": { "type": "integer", "minimum": 1 },
+    "pull_request_url": { "type": "string", "minLength": 1 },
+    "branch": { "type": "string", "minLength": 1 },
+    "base_branch": { "type": "string", "minLength": 1 },
+    "head_commit": { "type": "string", "minLength": 1 },
+    "verdict": {
+      "type": "string",
+      "enum": ["looks_sound", "changes_suggested", "blocked"]
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["severity", "file", "line", "summary", "rationale"],
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+          },
+          "file": { "type": "string", "minLength": 1 },
+          "line": { "type": "integer", "minimum": 0 },
+          "summary": { "type": "string", "minLength": 1 },
+          "rationale": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "state"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "state": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "unresolved_threads": { "type": "integer", "minimum": 0 },
+    "generated_at": { "type": "string", "format": "date-time" }
+  }
+}
