@@ -82,9 +82,9 @@ def tail_output(text: str) -> str:
 def split_command(command: str) -> list[str]:
     """Split a command line into argv.
 
-    POSIX splitting treats a backslash as an escape, which destroys Windows
-    paths such as C:\Python\python.exe. On Windows, split without POSIX
-    rules and strip the quotes that mode leaves attached to each token.
+    POSIX splitting treats a backslash as an escape, which destroys any
+    Windows path that contains one. On Windows, split without POSIX rules and
+    strip the quotes that mode leaves attached to each token.
     """
     if os.name == "nt":
         parts = shlex.split(command, posix=False)
