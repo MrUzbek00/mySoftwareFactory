@@ -30,6 +30,31 @@ TAIL_LINES = 40
 TAIL_LINE_CHARS = 500
 DEFAULT_TIMEOUT = 900
 
+QUALITY_CRITERIA = frozenset(
+    {
+        "naming",
+        "function-names",
+        "class-names",
+        "parameter-names",
+        "input-types",
+        "return-types",
+        "nullability",
+        "collection-types",
+        "structured-inputs",
+        "documentation",
+        "variadic-contract",
+        "boolean-names",
+        "constants-enums",
+        "comments",
+        "cohesion",
+        "side-effects",
+        "error-behavior",
+        "domain-language",
+        "framework-conventions",
+    }
+)
+QUALITY_SEVERITIES = ("BLOCKING", "ADVISORY")
+
 
 class ScriptError(Exception):
     """Structured error that can be returned as JSON."""
@@ -118,6 +143,87 @@ def read_json(path: Path) -> dict[str, Any]:
     except (OSError, json.JSONDecodeError):
         return {}
     return data if isinstance(data, dict) else {}
+
+
+def load_quality_review(path_arg: str) -> dict[str, Any]:
+    """Load an agent-authored backend code quality review and check its shape.
+
+    The review is judgment, so a model produces it. Whether a blocking finding
+    stops the change is not judgment, so this script decides that. A malformed
+    review is an error rather than an empty result, because silently dropping it
+    would report a change as validated that nobody reviewed.
+    """
+    path = Path(path_arg).expanduser().resolve()
+    if not path.is_file():
+        raise ScriptError("INVALID_QUALITY_REVIEW", f"Quality review file does not exist: {path}")
+
+    try:
+        with path.open(encoding="utf-8") as handle:
+            review = json.load(handle)
+    except json.JSONDecodeError as exc:
+        raise ScriptError(
+            "INVALID_QUALITY_REVIEW", f"{path} is not valid JSON: {exc}"
+        ) from exc
+    if not isinstance(review, dict):
+        raise ScriptError("INVALID_QUALITY_REVIEW", f"{path} must contain a JSON object.")
+
+    status = review.get("status")
+    if status not in ("pass", "findings", "not_reviewed"):
+        raise ScriptError(
+            "INVALID_QUALITY_REVIEW",
+            "Quality review status must be pass, findings, or not_reviewed.",
+        )
+
+    findings = review.get("findings", [])
+    if not isinstance(findings, list):
+        raise ScriptError("INVALID_QUALITY_REVIEW", "Quality review findings must be a list.")
+
+    counts = dict.fromkeys(QUALITY_SEVERITIES, 0)
+    for finding in findings:
+        if not isinstance(finding, dict):
+            raise ScriptError("INVALID_QUALITY_REVIEW", "Each finding must be a JSON object.")
+        required_keys = ("criterion", "severity", "file", "detail")
+        missing = [key for key in required_keys if not finding.get(key)]
+        if missing:
+            raise ScriptError(
+                "INVALID_QUALITY_REVIEW",
+                f"Finding is missing required fields: {', '.join(missing)}.",
+            )
+        if finding["criterion"] not in QUALITY_CRITERIA:
+            known = ", ".join(sorted(QUALITY_CRITERIA))
+            raise ScriptError(
+                "INVALID_QUALITY_REVIEW",
+                f"Unknown criterion {finding['criterion']}. Known criteria: {known}.",
+            )
+        if finding["severity"] not in QUALITY_SEVERITIES:
+            raise ScriptError(
+                "INVALID_QUALITY_REVIEW",
+                f"Severity must be one of {', '.join(QUALITY_SEVERITIES)}.",
+            )
+        counts[finding["severity"]] += 1
+
+    if status == "findings" and not findings:
+        raise ScriptError(
+            "INVALID_QUALITY_REVIEW",
+            "Quality review status is findings but no finding was recorded.",
+        )
+    if status == "pass" and findings:
+        raise ScriptError(
+            "INVALID_QUALITY_REVIEW",
+            "Quality review status is pass but findings were recorded.",
+        )
+
+    resolved: dict[str, Any] = {
+        "status": status,
+        "reviewed_files": list(review.get("reviewed_files", [])),
+        "findings": findings,
+        "counts": counts,
+    }
+    if "skipped_files" in review:
+        resolved["skipped_files"] = list(review["skipped_files"])
+    if status == "not_reviewed":
+        resolved["not_reviewed_reason"] = review.get("not_reviewed_reason")
+    return resolved
 
 
 def detect_checks(worktree: Path) -> list[tuple[str, str]]:
@@ -267,6 +373,15 @@ def build_parser() -> argparse.ArgumentParser:
         default=DEFAULT_TIMEOUT,
         help=f"Per-check timeout in seconds (default {DEFAULT_TIMEOUT}).",
     )
+    parser.add_argument(
+        "--quality-review",
+        default=None,
+        metavar="PATH",
+        help=(
+            "Path to the backend code quality review JSON. A BLOCKING finding "
+            "fails validation."
+        ),
+    )
     return parser
 
 
@@ -295,7 +410,13 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     head_commit = run_git(worktree, ["rev-parse", "HEAD"]).stdout.strip()
     passed = all(check["status"] == "pass" for check in checks)
 
-    return {
+    quality_review = None
+    if args.quality_review is not None:
+        quality_review = load_quality_review(args.quality_review)
+        if quality_review["counts"]["BLOCKING"]:
+            passed = False
+
+    report = {
         "status": "pass" if passed else "fail",
         "task_id": task_id,
         "branch": branch,
@@ -307,6 +428,9 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "ready_for_pull_request": passed,
         "generated_at": datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
     }
+    if quality_review is not None:
+        report["code_quality"] = quality_review
+    return report
 
 
 def main(argv: list[str] | None = None) -> int:

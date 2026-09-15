@@ -19,6 +19,7 @@ from typing import Any
 TASK_ID_PATTERN = re.compile(r"^TASK-[A-Z0-9]+(?:-[A-Z0-9]+)*$")
 
 STAGE_SCHEMAS = {
+    "prepare-task": "task-handoff.schema.json",
     "inspect-repository": "repository-context.schema.json",
     "plan-change": "change-plan.schema.json",
     "isolate-task": "workspace-result.schema.json",
@@ -154,6 +155,19 @@ def cross_check(artifacts: dict[str, dict[str, Any]], task_id: str) -> list[str]
     if security and security.get("counts", {}).get("CRITICAL", 0) and pull_request:
         problems.append(
             "security review recorded CRITICAL findings and a pull request was still opened"
+        )
+
+    quality = (validation or {}).get("code_quality")
+    if quality and quality.get("counts", {}).get("BLOCKING", 0) and pull_request:
+        problems.append(
+            "validation recorded BLOCKING code quality findings and a pull request "
+            "was still opened"
+        )
+
+    handoff = artifacts.get("prepare-task")
+    if handoff and handoff.get("readiness") != "READY":
+        problems.append(
+            f"task was handed off with readiness {handoff.get('readiness')}, not READY"
         )
 
     return problems

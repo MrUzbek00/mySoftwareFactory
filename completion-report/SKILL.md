@@ -41,6 +41,7 @@ The deterministic workflow is:
 4. Confirm every artifact agrees on the branch.
 5. Confirm a pull request was not opened on failed validation.
 6. Confirm the pull request head matches the validated commit.
+   Confirm `BLOCKING` code quality findings did not reach a pull request.
 7. Confirm a blocked implementation did not produce a pull request.
 8. Confirm `CRITICAL` security findings did not reach a pull request.
 9. Report missing required stages.
@@ -70,9 +71,14 @@ These must be present for a task that reached a pull request:
 `inspect-repository`, `plan-change`, `isolate-task`, `implement-change`,
 `validate-change`, `create-pull-request`.
 
-`before-after`, `security-review`, `update-documentation`,
+`prepare-task`, `before-after`, `security-review`, `update-documentation`,
 `review-pull-request`, and `revise-pull-request` are optional and reported as
 absent when not provided. Absent means not run — say which it was.
+
+`prepare-task` is present only for a task that came from a specification-driven
+backlog. Include it when it exists: it carries the source requirements, so the
+report answers why the task existed, not only what was done. The script confirms
+the handoff was `READY`.
 
 ## Persisting Artifacts
 

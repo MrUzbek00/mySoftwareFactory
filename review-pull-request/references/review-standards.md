@@ -23,6 +23,17 @@ consequence, it is not a finding.
 Preferences are not worthless, but they are not findings. Say them as
 preferences, or leave them out.
 
+## Backend Code Quality
+
+`standards/backend-code-quality.md` is the criteria set for readability, typing,
+and contract clarity. A review uses the same criteria `validate-change` used, so
+the author does not get two different answers about the same code.
+
+Map its severity onto this skill's scale: a `BLOCKING` quality finding is at
+least `HIGH` here, because an unusable contract causes wrong behavior at the
+next call site. An `ADVISORY` finding is a preference, and the section above
+already says where preferences belong.
+
 ## Severity
 
 | Severity | Meaning |

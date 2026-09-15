@@ -216,6 +216,51 @@ def test_critical_security_finding_with_pull_request_is_flagged(
     assert any("CRITICAL findings" in item for item in payload["inconsistencies"])
 
 
+def test_blocking_quality_finding_with_pull_request_is_flagged(
+    artifacts: dict, tmp_path: Path
+) -> None:
+    artifacts["validate-change"]["code_quality"] = {
+        "status": "findings",
+        "reviewed_files": ["app/Services/ContractService.php"],
+        "findings": [
+            {
+                "criterion": "return-types",
+                "severity": "BLOCKING",
+                "file": "app/Services/ContractService.php",
+                "detail": "Returns Contract or false with no declared return type.",
+            }
+        ],
+        "counts": {"BLOCKING": 1, "ADVISORY": 0},
+    }
+
+    _, payload = run_script(artifacts, tmp_path)
+
+    assert any("BLOCKING code quality findings" in item for item in payload["inconsistencies"])
+
+
+def test_advisory_quality_finding_does_not_flag_the_report(
+    artifacts: dict, tmp_path: Path
+) -> None:
+    artifacts["validate-change"]["code_quality"] = {
+        "status": "findings",
+        "reviewed_files": ["app/Services/ContractService.php"],
+        "findings": [
+            {
+                "criterion": "naming",
+                "severity": "ADVISORY",
+                "file": "app/Services/ContractService.php",
+                "detail": "A local variable name could be clearer.",
+            }
+        ],
+        "counts": {"BLOCKING": 0, "ADVISORY": 1},
+    }
+
+    return_code, payload = run_script(artifacts, tmp_path)
+
+    assert return_code == 0
+    assert payload["status"] == "complete"
+
+
 def test_blocked_implementation_with_pull_request_is_flagged(
     artifacts: dict, tmp_path: Path
 ) -> None:

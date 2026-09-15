@@ -22,6 +22,29 @@ contract. Everything else is a separate task.
 A good rule: if you cannot point at the implementation step that requires an
 edit, the edit belongs to a different task.
 
+## Quality Standards Inside Plan Scope
+
+`standards/backend-code-quality.md` and the scope rule above can look like they
+disagree. They do not, and the boundary is worth stating precisely.
+
+The standard governs the code this change writes. Every new function gets a
+clear name, explicit types, and an honest contract, because writing it that way
+costs nothing extra at the time.
+
+The standard is not authority to improve code the plan did not name. Renaming an
+existing method, adding types across an untouched file, or restructuring a
+neighbouring class is out of scope even when the standard would prefer it.
+
+| Situation | Action |
+| --- | --- |
+| A function the plan adds | Standard applies in full. |
+| A function the plan modifies | Standard applies to what you change. |
+| A signature you must touch to make the change work | Standard applies; note it as a deviation if it alters a public contract. |
+| Code you merely read, or happened to open | Leave it. Report it if it is bad enough to matter. |
+
+An existing repository that violates the standard everywhere is a finding for a
+separate task, not a mandate to reformat it under cover of this one.
+
 ## Tests Are Not Negotiable
 
 The fastest way to make a suite green is to weaken it. That is prohibited, and

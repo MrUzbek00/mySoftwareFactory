@@ -19,6 +19,9 @@ directly in the source repository.
 Read `references/implementation-discipline.md` when deciding whether a change is
 inside the plan's scope.
 
+Read `standards/backend-code-quality.md` before writing backend code. It is the
+standard this stage applies and the one `validate-change` reviews against.
+
 ## Preconditions
 
 - A structured change plan exists and is approved.
@@ -46,6 +49,12 @@ inside the plan's scope.
 
 ## Rules
 
+- Backend code must satisfy `standards/backend-code-quality.md`. It is an
+  implementation expectation, not a suggestion.
+- The repository's framework conventions, existing architecture, and established
+  domain language take precedence over the standard's generic preferences.
+- Apply the standard to code this change writes. It is not a licence to rename
+  or restructure code the plan did not name.
 - Work only inside the task worktree. Never write to the source repository
   checkout or another task's workspace.
 - Implement the plan, not adjacent improvements. Unplanned refactors, renames,
@@ -83,6 +92,30 @@ Determine:
 - What test proves this edit works?
 - Does this edit change a public contract the plan did not list?
 - Is anything in the plan now known to be wrong?
+
+## Backend Quality Self-Review
+
+Answer these before reporting `ready_for_validation`. They are the same criteria
+`validate-change` will apply, so an honest answer here is cheaper than a failed
+validation.
+
+- Are function and method names clear about what they do?
+- Are class responsibilities clear from their names?
+- Are parameter names meaningful in business terms?
+- Are input types explicit wherever the language supports them?
+- Are return types explicit wherever the language supports them?
+- Is nullable behavior explicit?
+- Is the content of every collection understandable?
+- Is domain terminology consistent with the requirements and the repository?
+- Does documentation exist where it adds contract information a signature
+  cannot?
+- Do comments explain why rather than restating what?
+- Were generic names such as `data`, `info`, `result`, or `tmp` avoidable?
+- Are functions cohesive, each with one clear responsibility?
+- Were framework-required names left alone?
+
+A "no" is either fixed now or recorded in `unknowns` with the reason. It is not
+left for validation to discover.
 
 ## Deviation Handling
 
@@ -135,6 +168,7 @@ approved.
 ## Completion Criteria
 
 - Every implementation step is completed or explicitly skipped with a reason.
+- The backend quality self-review was answered, not assumed.
 - Planned tests exist and were actually run.
 - All work is committed on the task branch.
 - The worktree is clean.

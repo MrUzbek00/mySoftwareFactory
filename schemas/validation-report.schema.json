@@ -66,6 +66,68 @@
         "deletions": { "type": "integer", "minimum": 0 }
       }
     },
+    "code_quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reviewed_files", "findings", "counts"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["pass", "findings", "not_reviewed"]
+        },
+        "reviewed_files": { "type": "array", "items": { "type": "string" } },
+        "skipped_files": { "type": "array", "items": { "type": "string" } },
+        "not_reviewed_reason": { "type": ["string", "null"] },
+        "findings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["criterion", "severity", "file", "detail"],
+            "properties": {
+              "criterion": {
+                "type": "string",
+                "enum": [
+                  "naming",
+                  "function-names",
+                  "class-names",
+                  "parameter-names",
+                  "input-types",
+                  "return-types",
+                  "nullability",
+                  "collection-types",
+                  "structured-inputs",
+                  "documentation",
+                  "variadic-contract",
+                  "boolean-names",
+                  "constants-enums",
+                  "comments",
+                  "cohesion",
+                  "side-effects",
+                  "error-behavior",
+                  "domain-language",
+                  "framework-conventions"
+                ]
+              },
+              "severity": { "type": "string", "enum": ["BLOCKING", "ADVISORY"] },
+              "file": { "type": "string", "minLength": 1 },
+              "symbol": { "type": ["string", "null"] },
+              "detail": { "type": "string", "minLength": 1 },
+              "suggestion": { "type": ["string", "null"] }
+            }
+          }
+        },
+        "counts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["BLOCKING", "ADVISORY"],
+          "properties": {
+            "BLOCKING": { "type": "integer", "minimum": 0 },
+            "ADVISORY": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
     "ready_for_pull_request": { "type": "boolean" },
     "generated_at": { "type": "string", "format": "date-time" }
   }

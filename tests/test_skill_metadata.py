@@ -20,15 +20,20 @@ def test_skill_frontmatter_is_present_and_matches_directory() -> None:
     skill_paths = sorted(root.glob("*/SKILL.md"))
     assert [path.parent.name for path in skill_paths] == [
         "before-after",
+        "clarify-project",
         "completion-report",
         "create-pull-request",
+        "decompose-spec",
         "implement-change",
+        "ingest-requirements",
         "inspect-repository",
         "isolate-task",
         "plan-change",
+        "prepare-task",
         "review-pull-request",
         "revise-pull-request",
         "security-review",
+        "start-from-spec",
         "update-documentation",
         "validate-change",
     ]
