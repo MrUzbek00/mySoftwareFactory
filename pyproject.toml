@@ -14,6 +14,13 @@ dev = [
     "ruff>=0.6",
 ]
 
+[tool.setuptools]
+# This project ships no importable Python package. Every script is run by path,
+# and the skill directories are hyphenated, so none of them is a valid module
+# name. Without this, setuptools tries flat-layout auto-discovery and refuses
+# the build because it finds both `schemas` and `standards` at the top level.
+packages = []
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
