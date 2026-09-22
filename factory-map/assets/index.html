@@ -569,7 +569,7 @@ function bottom(id) {
   const p = layout.nodes[id];
   return { x: p.x + CARD_W / 2, y: p.y + CARD_H };
 }
-function top(id) {
+function nodeTop(id) {
   const p = layout.nodes[id];
   return { x: p.x + CARD_W / 2, y: p.y };
 }
@@ -600,7 +600,7 @@ function edgePath(edge) {
 
   if (sourceLane === targetLane) {
     const s = bottom(edge.source);
-    const t = top(edge.target);
+    const t = nodeTop(edge.target);
     const bow = Math.max(60, (t.y - s.y) * 0.34);
     const out = LANE_W / 2 + 26;
     return {

@@ -88,6 +88,21 @@ def test_the_page_loads_nothing_from_the_network() -> None:
     assert set(urls) == {"http://www.w3.org/2000/svg"}
 
 
+# Properties of window that a classic script cannot redeclare at top level.
+# A global `function top()` throws on load, and the whole map stays blank.
+UNFORGEABLE_WINDOW_PROPERTIES = ("top", "window", "document", "location")
+
+
+def test_the_page_script_declares_no_global_that_shadows_window() -> None:
+    page = (ROOT / "factory-map" / "assets" / "index.html").read_text(encoding="utf-8")
+    names = "|".join(UNFORGEABLE_WINDOW_PROPERTIES)
+    top_level_declaration = re.compile(
+        rf"^(?:function|var|let|const|class)\s+({names})\b", re.MULTILINE
+    )
+
+    assert top_level_declaration.findall(page) == []
+
+
 def test_the_state_route_serves_state_with_an_etag(server: dict) -> None:
     status, body, headers = get(server["url"] + "/api/state")
     state = json.loads(body)
