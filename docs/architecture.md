@@ -52,6 +52,7 @@ README.md                entry point and orientation
 standards/               criteria shared by several stages
 schemas/                 artifact contracts, one file per artifact
 docs/                    explanation, walkthroughs, and indexes
+factory-map/             tooling: the local pipeline map
 tests/                   the suite that holds the structure in place
 .github/workflows/       continuous integration
 
@@ -80,6 +81,13 @@ the suite until someone changes that list on purpose.
 Non-skill tooling gets its own top-level directory and carries no `SKILL.md`.
 That single rule keeps the glob honest, keeps the skills catalogue meaningful,
 and lets a tool be added without arguing about whether it is a skill.
+
+`factory-map/` is the first tool to follow it. It serves an interactive map of
+the pipeline on the loopback interface, deriving each stage's state from the
+files on disk rather than from anything written into the page. It reads the
+repository and the run-state directory and writes to neither.
+`factory-map/README.md` documents what each status means and which file and
+field produces it.
 
 ## Deterministic Scripts
 

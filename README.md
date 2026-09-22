@@ -120,6 +120,22 @@ follow, and no other document restates them.
 | `docs/running-a-project.md` | a specification to a completion report, end to end |
 | `standards/backend-code-quality.md` | the criteria backend code the factory writes must satisfy |
 | `docs/examples/` | two worked examples, one per entry point |
+| `factory-map/README.md` | the local pipeline map: how to run it, how it derives state |
+
+## Pipeline Map
+
+`factory-map/` serves an interactive map of the pipeline on the loopback
+interface. It draws the seventeen stages, the seven gates, and the state of
+each one, derived from the files on disk at request time.
+
+```bash
+python factory-map/scripts/serve_map.py --port 8787
+```
+
+Without a `.factory` directory it reports how completely each stage is built.
+With one, it reports where a task has actually got to, and every status names
+the file and the field it came from. It is read-only: it writes nothing, runs
+no pipeline stage, and stops at showing you what is there.
 
 ## Local Development
 

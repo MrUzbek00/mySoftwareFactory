@@ -68,7 +68,12 @@ REQUIRED_PATHS = [
     "schemas/pull-request-review.schema.json",
     "schemas/revision-result.schema.json",
     "schemas/completion-report.schema.json",
+    "schemas/factory-map-state.schema.json",
     "standards/backend-code-quality.md",
+    "factory-map/README.md",
+    "factory-map/assets/index.html",
+    "factory-map/scripts/build_state.py",
+    "factory-map/scripts/serve_map.py",
     "docs/pipeline.md",
     "docs/architecture.md",
     "docs/schemas.md",
@@ -82,6 +87,8 @@ REQUIRED_PATHS = [
     "tests/test_check_backlog.py",
     "tests/test_prepare_task.py",
     "tests/test_quality_review.py",
+    "tests/test_build_state.py",
+    "tests/test_serve_map.py",
 ]
 
 
