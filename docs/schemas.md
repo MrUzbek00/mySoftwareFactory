@@ -7,6 +7,10 @@ validates all of them again at the end.
 This document is the index. It says which stage writes each schema and which
 stage consumes what that schema describes.
 
+Sixteen of these schemas are pipeline artifact contracts. One,
+`factory-map-state.schema.json`, is the output contract of a tool rather than
+of a stage, and is listed separately at the end.
+
 ## Intake Artifacts
 
 Produced only when the input is a project-level specification. These live in
@@ -40,6 +44,16 @@ Produced once per task, in pipeline order.
 
 `start-from-spec` is the one stage with no schema of its own. It routes, and
 the artifacts it points at belong to the stages that write them.
+
+## Tooling
+
+| Schema | Written by | Read by |
+| --- | --- | --- |
+| `factory-map-state.schema.json` | `factory-map/scripts/build_state.py` | the map page, and `tests/test_build_state.py` |
+
+This one is not a pipeline artifact. No stage produces it, `completion-report`
+never validates it, and its presence in `schemas/` is a convenience rather than
+a claim that the map is part of the pipeline.
 
 ## The Audit Pass
 
