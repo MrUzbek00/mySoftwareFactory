@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.com/software-factory-skills/task-handoff.schema.json",
+  "$id": "https://example.com/my-software-factory/task-handoff.schema.json",
   "title": "TaskHandoff",
   "type": "object",
   "additionalProperties": false,

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.com/software-factory-skills/security-review.schema.json",
+  "$id": "https://example.com/my-software-factory/security-review.schema.json",
   "title": "SecurityReview",
   "type": "object",
   "additionalProperties": false,

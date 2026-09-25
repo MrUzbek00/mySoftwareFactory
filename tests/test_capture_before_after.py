@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "before-after" / "scripts" / "capture_before_after.py"
+SCRIPT = ROOT / "skills" / "engineering" / "before-after" / "scripts" / "capture_before_after.py"
 GIT_AVAILABLE = shutil.which("git") is not None
 
 

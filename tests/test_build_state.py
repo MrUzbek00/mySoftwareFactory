@@ -14,7 +14,7 @@ from typing import Any
 from jsonschema import Draft202012Validator
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "factory-map" / "scripts" / "build_state.py"
+SCRIPT = ROOT / "tools" / "factory-map" / "scripts" / "build_state.py"
 STATE_SCHEMA = ROOT / "schemas" / "factory-map-state.schema.json"
 
 
@@ -69,7 +69,9 @@ def test_build_status_comes_from_the_files_each_stage_has(tmp_path: Path) -> Non
     state = state_for(tmp_path / "absent")
 
     validate = node(state, "validate-change")
-    assert validate["build"]["script"] == "validate-change/scripts/run_validation.py"
+    assert validate["build"]["script"] == (
+        "skills/engineering/validate-change/scripts/run_validation.py"
+    )
     assert validate["build"]["schema"] == "schemas/validation-report.schema.json"
     assert "tests/test_run_validation.py" in validate["build"]["tests"]
     assert validate["build"]["status"] == "built"
@@ -337,7 +339,7 @@ def test_the_scripts_view_takes_its_wording_from_the_architecture_document(
     rows = {row["script"]: row for row in state["views"]["scripts"]}
 
     assert len(rows) == 10
-    assert rows["isolate-task/scripts/create_worktree.py"]["enforces"] == (
+    assert rows["skills/engineering/isolate-task/scripts/create_worktree.py"]["enforces"] == (
         "safe branch naming, clean tree, no overwrite"
     )
 
@@ -346,5 +348,5 @@ def test_an_unplaced_skill_directory_is_reported_rather_than_dropped(tmp_path: P
     state = state_for(tmp_path / "absent")
     assert state["warnings"] == []
     assert set(build_state_module.STAGE_IDS) == {
-        path.parent.name for path in ROOT.glob("*/SKILL.md")
+        path.parent.name for path in ROOT.glob(build_state_module.SKILL_GLOB)
     }

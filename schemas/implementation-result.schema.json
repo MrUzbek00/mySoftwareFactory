@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.com/software-factory-skills/implementation-result.schema.json",
+  "$id": "https://example.com/my-software-factory/implementation-result.schema.json",
   "title": "ImplementationResult",
   "type": "object",
   "additionalProperties": false,

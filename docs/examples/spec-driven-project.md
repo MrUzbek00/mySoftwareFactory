@@ -231,7 +231,7 @@ depends_on:
 The backlog is checked before it is shown:
 
 ```bash
-python decompose-spec/scripts/check_backlog.py \
+python skills/intake/decompose-spec/scripts/check_backlog.py \
   --project-context .factory/project.json \
   --requirements .factory/requirements.json \
   --backlog .factory/backlog.json \
@@ -265,7 +265,7 @@ The backlog is presented with a recommended first task, and waits for approval.
 Once approved, exactly one task is prepared:
 
 ```bash
-python prepare-task/scripts/prepare_task.py \
+python skills/intake/prepare-task/scripts/prepare_task.py \
   --project-context .factory/project.json \
   --requirements .factory/requirements.json \
   --backlog .factory/backlog.json \
@@ -312,7 +312,7 @@ python prepare-task/scripts/prepare_task.py \
 Asking for a blocked task produces a refusal, not a best effort:
 
 ```bash
-python prepare-task/scripts/prepare_task.py ... --task-id TASK-UZK-070
+python skills/intake/prepare-task/scripts/prepare_task.py ... --task-id TASK-UZK-070
 ```
 
 ```json

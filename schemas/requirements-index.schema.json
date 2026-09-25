@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.com/software-factory-skills/requirements-index.schema.json",
+  "$id": "https://example.com/my-software-factory/requirements-index.schema.json",
   "title": "RequirementsIndex",
   "type": "object",
   "additionalProperties": false,

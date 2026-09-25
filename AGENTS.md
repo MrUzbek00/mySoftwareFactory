@@ -1,7 +1,7 @@
 # Agent Constitution
 
 This repository defines the mandatory pre-implementation workflow for AI coding
-agents that operate inside future Software Factory systems.
+agents that operate inside future MySoftware Factory systems.
 
 ## Entry Routing
 

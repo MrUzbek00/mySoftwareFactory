@@ -5,8 +5,8 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "installer" / "scripts" / "install_skill.py"
-SKILL = "software-factory-gpt"
+SCRIPT = ROOT / "tools" / "installer" / "scripts" / "install_skill.py"
+SKILL = "my-software-factory"
 
 
 def run_installer(*args: str, env: dict[str, str] | None = None) -> tuple[int, dict]:
@@ -32,11 +32,17 @@ def test_installs_the_allowlisted_payload(tmp_path: Path) -> None:
     assert (installed / "agents" / "openai.yaml").is_file()
     assert (installed / "standards" / "backend-code-quality.md").is_file()
     assert (installed / "schemas" / "change-plan.schema.json").is_file()
-    assert (installed / "validate-change" / "scripts" / "run_validation.py").is_file()
-    stages = sorted(path.parent.name for path in ROOT.glob("*/SKILL.md"))
-    assert sorted(path.parent.name for path in installed.glob("*/SKILL.md")) == stages
+    validate_change = installed / "skills" / "engineering" / "validate-change"
+    assert (validate_change / "scripts" / "run_validation.py").is_file()
+    stages = sorted(path.relative_to(ROOT) for path in ROOT.glob("skills/*/*/SKILL.md"))
+    assert len(stages) == 17
+    installed_stages = sorted(
+        path.relative_to(installed) for path in installed.glob("skills/*/*/SKILL.md")
+    )
+    assert installed_stages == stages
+    assert (installed / "tools" / "factory-map" / "scripts" / "serve_map.py").is_file()
 
-    for excluded in ("tests", "installer", ".github", "pyproject.toml", ".gitignore"):
+    for excluded in ("tests", "tools/installer", ".github", "pyproject.toml", ".gitignore"):
         assert not (installed / excluded).exists(), excluded
     assert not list(installed.rglob("__pycache__"))
 
@@ -125,3 +131,15 @@ def test_refuses_to_install_inside_the_source(tmp_path: Path) -> None:
 
     assert code == 1
     assert result["error_code"] == "DESTINATION_OVERLAPS_SOURCE"
+
+
+def test_reports_but_keeps_a_legacy_install(tmp_path: Path) -> None:
+    legacy = tmp_path / "software-factory-gpt"
+    legacy.mkdir()
+    (legacy / "SKILL.md").write_text("---\nname: software-factory-gpt\n---\n", encoding="utf-8")
+
+    code, result = run_installer("--skills-dir", str(tmp_path))
+
+    assert code == 0, result
+    assert result["installs"][0]["legacy_installs"] == [str(legacy)]
+    assert (legacy / "SKILL.md").is_file()

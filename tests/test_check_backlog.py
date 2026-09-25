@@ -15,7 +15,7 @@ from typing import Any
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "decompose-spec" / "scripts" / "check_backlog.py"
+SCRIPT = ROOT / "skills" / "intake" / "decompose-spec" / "scripts" / "check_backlog.py"
 SCHEMAS = ROOT / "schemas"
 
 

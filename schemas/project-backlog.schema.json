@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.com/software-factory-skills/project-backlog.schema.json",
+  "$id": "https://example.com/my-software-factory/project-backlog.schema.json",
   "title": "ProjectBacklog",
   "type": "object",
   "additionalProperties": false,
