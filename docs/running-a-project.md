@@ -13,7 +13,7 @@ Point the factory at a technical requirements document:
 
 ```text
 Use this technical requirements document: docs/requirements.docx
-Start a new Software Factory project from it.
+Start a new MySoftware Factory project from it.
 ```
 
 What happens, in order:

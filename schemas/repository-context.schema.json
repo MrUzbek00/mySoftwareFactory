@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.com/software-factory-skills/repository-context.schema.json",
+  "$id": "https://example.com/my-software-factory/repository-context.schema.json",
   "title": "RepositoryContext",
   "type": "object",
   "additionalProperties": false,

@@ -1,5 +1,5 @@
 [project]
-name = "software-factory-skills"
+name = "my-software-factory"
 version = "0.1.0"
 description = "Reusable skills for controlled AI software-engineering workflows."
 readme = "README.md"

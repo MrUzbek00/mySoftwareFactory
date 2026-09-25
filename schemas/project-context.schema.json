@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.com/software-factory-skills/project-context.schema.json",
+  "$id": "https://example.com/my-software-factory/project-context.schema.json",
   "title": "ProjectContext",
   "type": "object",
   "additionalProperties": false,

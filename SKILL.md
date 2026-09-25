@@ -1,11 +1,11 @@
 ---
-name: software-factory-gpt
-description: Controlled, auditable engineering pipeline that carries work from a technical requirements document or a single task to a reviewed pull request - ingest requirements, interview, decompose into an approved backlog, then inspect, plan, isolate on a branch and worktree, implement, validate with machine-captured evidence, capture before/after behavior, scan for secrets, update docs, open one PR, review it, revise it, and close with an audited completion report. Use when the user asks for a safe or disciplined approach to a code change, mentions "software factory", hands over a spec, BRD, or SRS to turn into work, wants a structured change plan or backlog, wants work isolated on its own branch, wants tests run as real evidence rather than claims, wants a PR reviewed or revised, or wants an audit trail for a change. Never merges or deploys.
+name: my-software-factory
+description: Controlled, auditable engineering pipeline that carries work from a technical requirements document or a single task to a reviewed pull request - ingest requirements, interview, decompose into an approved backlog, then inspect, plan, isolate on a branch and worktree, implement, validate with machine-captured evidence, capture before/after behavior, scan for secrets, update docs, open one PR, review it, revise it, and close with an audited completion report. Use when the user asks for a safe or disciplined approach to a code change, mentions MySoftware Factory or "software factory", hands over a spec, BRD, or SRS to turn into work, wants a structured change plan or backlog, wants work isolated on its own branch, wants tests run as real evidence rather than claims, wants a PR reviewed or revised, or wants an audit trail for a change. Never merges or deploys.
 metadata:
   short-description: Auditable spec-to-pull-request coding pipeline
 ---
 
-# Software Factory GPT
+# MySoftware Factory
 
 A controlled engineering pipeline. It carries work from a specification or a
 single task to a reviewed pull request, and stops at the merge button.
@@ -85,39 +85,40 @@ Stages S1-S5 run only for project-level input.
 
 | # | Stage | Read this file | Writes? |
 | --- | --- | --- | --- |
-| S1 | Route spec | `start-from-spec/SKILL.md` | no |
-| S2 | Ingest requirements | `ingest-requirements/SKILL.md` | artifacts only |
-| S3 | Clarify project | `clarify-project/SKILL.md` | artifacts only |
-| S4 | Decompose spec | `decompose-spec/SKILL.md` | artifacts only |
-| S5 | Prepare task | `prepare-task/SKILL.md` | artifacts only |
+| S1 | Route spec | `skills/intake/start-from-spec/SKILL.md` | no |
+| S2 | Ingest requirements | `skills/intake/ingest-requirements/SKILL.md` | artifacts only |
+| S3 | Clarify project | `skills/intake/clarify-project/SKILL.md` | artifacts only |
+| S4 | Decompose spec | `skills/intake/decompose-spec/SKILL.md` | artifacts only |
+| S5 | Prepare task | `skills/intake/prepare-task/SKILL.md` | artifacts only |
 
 Stages 1-12 take one scoped task to a reviewed pull request.
 
 | # | Stage | Read this file | Writes? |
 | --- | --- | --- | --- |
-| 1 | Inspect | `inspect-repository/SKILL.md` | no |
-| 2 | Plan | `plan-change/SKILL.md` | no |
-| 3 | Isolate | `isolate-task/SKILL.md` | local git |
-| 4 | Implement | `implement-change/SKILL.md` | worktree only |
-| 5 | Validate | `validate-change/SKILL.md` | no |
-| 6 | Before/after | `before-after/SKILL.md` | scratch worktree |
-| 7 | Security | `security-review/SKILL.md` | no |
-| 8 | Docs | `update-documentation/SKILL.md` | worktree only |
-| 9 | Pull request | `create-pull-request/SKILL.md` | push + PR |
-| 10 | Review | `review-pull-request/SKILL.md` | no |
-| 11 | Revise | `revise-pull-request/SKILL.md` | worktree + push |
-| 12 | Report | `completion-report/SKILL.md` | no |
+| 1 | Inspect | `skills/engineering/inspect-repository/SKILL.md` | no |
+| 2 | Plan | `skills/engineering/plan-change/SKILL.md` | no |
+| 3 | Isolate | `skills/engineering/isolate-task/SKILL.md` | local git |
+| 4 | Implement | `skills/engineering/implement-change/SKILL.md` | worktree only |
+| 5 | Validate | `skills/engineering/validate-change/SKILL.md` | no |
+| 6 | Before/after | `skills/engineering/before-after/SKILL.md` | scratch worktree |
+| 7 | Security | `skills/engineering/security-review/SKILL.md` | no |
+| 8 | Docs | `skills/engineering/update-documentation/SKILL.md` | worktree only |
+| 9 | Pull request | `skills/engineering/create-pull-request/SKILL.md` | push + PR |
+| 10 | Review | `skills/engineering/review-pull-request/SKILL.md` | no |
+| 11 | Revise | `skills/engineering/revise-pull-request/SKILL.md` | worktree + push |
+| 12 | Report | `skills/engineering/completion-report/SKILL.md` | no |
 
 Stages 6, 8, 10, and 11 are optional, and each says when it applies. Skipping one
 is a decision to state, not a step to omit silently.
 
-Supporting material lives next to the stage directories:
+Stages live in `skills/intake/` and `skills/engineering/`. Supporting material
+sits beside them:
 
 - `schemas/`: the JSON Schemas every stage output must validate against.
 - `standards/`: criteria shared by several stages, not owned by one.
-- `*/references/`: deeper guidance to read on demand, not up front.
-- `*/scripts/`: deterministic scripts. Use them instead of improvising Git,
-  test, or `gh` commands.
+- `skills/*/*/references/`: deeper guidance to read on demand, not up front.
+- `skills/*/*/scripts/`: deterministic scripts. Use them instead of improvising
+  Git, test, or `gh` commands.
 - `AGENTS.md`: the normative rules this pipeline enforces.
 - `docs/examples/sample-task.md`: a worked single-task request.
 - `docs/examples/spec-driven-project.md`: a worked spec-to-backlog path,
@@ -129,12 +130,15 @@ This skill runs unchanged in Claude Code and in OpenAI Codex. Only the host's
 mechanics differ, so the stage files are written in terms of what to do, not
 which tool to call.
 
-- **Paths.** Every path in this skill, including those in the stage files, is
-  relative to the directory that contains this `SKILL.md`. Resolve it to an
-  absolute path once and run scripts by that absolute path, because the working
-  directory is the repository being changed, not this skill.
-- **Scripts.** Run them with Python 3.12 or later: `python <skill-dir>/<stage>/scripts/<script>.py`,
-  or `py -3` on Windows when `python` is not on `PATH`. They use the standard
+- **Paths.** A path that starts with `skills/`, `schemas/`, `standards/`,
+  `docs/`, or `tools/` is relative to the directory that contains this
+  `SKILL.md`, wherever it appears. A bare `references/` or `scripts/` path inside
+  a stage file is relative to that stage's directory. Resolve the skill
+  directory to an absolute path once and run scripts by absolute path, because
+  the working directory is the repository being changed, not this skill.
+- **Scripts.** Run them with Python 3.12 or later, as
+  `python <skill-dir>/skills/<phase>/<stage>/scripts/<script>.py`, or with
+  `py -3` on Windows when `python` is not on `PATH`. They use the standard
   library only. Installing `jsonschema` makes schema checks complete rather than
   required-key checks; nothing else is needed. Stages that publish or read pull
   requests also need `git` and an authenticated `gh`.
@@ -152,7 +156,7 @@ which tool to call.
 ## Project Artifacts
 
 A project keeps its state under an artifact root, `.factory/` by default (see
-`start-from-spec/SKILL.md`). Artifacts are never committed to the repository
+`skills/intake/start-from-spec/SKILL.md`). Artifacts are never committed to the repository
 being built:
 
 ```text
@@ -174,18 +178,18 @@ enforce rules that prose cannot:
 
 | Script | Enforces |
 | --- | --- |
-| `decompose-spec/scripts/check_backlog.py` | resolvable references, acyclic dependencies, honest readiness |
-| `prepare-task/scripts/prepare_task.py` | one task, READY only, confirmed context, approved backlog |
-| `isolate-task/scripts/create_worktree.py` | safe branch naming, clean tree, no overwrite |
-| `validate-change/scripts/run_validation.py` | real commands, real exit codes, real output, blocking quality findings |
-| `before-after/scripts/capture_before_after.py` | both sides measured, scratch worktree cleaned up |
-| `security-review/scripts/scan_diff.py` | added lines only, secrets redacted on match |
-| `create-pull-request/scripts/open_pull_request.py` | no force push, no protected head, one PR |
-| `review-pull-request/scripts/fetch_pull_request.py` | read-only; cannot approve, merge, or comment |
-| `revise-pull-request/scripts/push_revision.py` | fast-forward only; refuses a diverged branch |
-| `completion-report/scripts/build_report.py` | schema validation and cross-artifact contradiction checks |
+| `skills/intake/decompose-spec/scripts/check_backlog.py` | resolvable references, acyclic dependencies, honest readiness |
+| `skills/intake/prepare-task/scripts/prepare_task.py` | one task, READY only, confirmed context, approved backlog |
+| `skills/engineering/isolate-task/scripts/create_worktree.py` | safe branch naming, clean tree, no overwrite |
+| `skills/engineering/validate-change/scripts/run_validation.py` | real commands, real exit codes, real output, blocking quality findings |
+| `skills/engineering/before-after/scripts/capture_before_after.py` | both sides measured, scratch worktree cleaned up |
+| `skills/engineering/security-review/scripts/scan_diff.py` | added lines only, secrets redacted on match |
+| `skills/engineering/create-pull-request/scripts/open_pull_request.py` | no force push, no protected head, one PR |
+| `skills/engineering/review-pull-request/scripts/fetch_pull_request.py` | read-only; cannot approve, merge, or comment |
+| `skills/engineering/revise-pull-request/scripts/push_revision.py` | fast-forward only; refuses a diverged branch |
+| `skills/engineering/completion-report/scripts/build_report.py` | schema validation and cross-artifact contradiction checks |
 
-`factory-map/scripts/serve_map.py` is optional tooling, not a stage. It serves a
+`tools/factory-map/scripts/serve_map.py` is optional tooling, not a stage. It serves a
 read-only map of where a run has got to, derived from the artifact root.
 
 ## Coding Standards

@@ -20,7 +20,7 @@ from typing import Any
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "validate-change" / "scripts" / "run_validation.py"
+SCRIPT = ROOT / "skills" / "engineering" / "validate-change" / "scripts" / "run_validation.py"
 SCHEMAS = ROOT / "schemas"
 GIT_AVAILABLE = shutil.which("git") is not None
 

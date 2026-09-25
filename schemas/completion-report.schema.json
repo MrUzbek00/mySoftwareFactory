@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.com/software-factory-skills/completion-report.schema.json",
+  "$id": "https://example.com/my-software-factory/completion-report.schema.json",
   "title": "CompletionReport",
   "type": "object",
   "additionalProperties": false,

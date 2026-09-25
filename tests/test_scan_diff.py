@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "security-review" / "scripts" / "scan_diff.py"
+SCRIPT = ROOT / "skills" / "engineering" / "security-review" / "scripts" / "scan_diff.py"
 GIT_AVAILABLE = shutil.which("git") is not None
 
 AWS_KEY = "AKIAIOSFODNN7EXAMPLE"

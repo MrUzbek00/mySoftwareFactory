@@ -13,7 +13,7 @@ from typing import Any
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "prepare-task" / "scripts" / "prepare_task.py"
+SCRIPT = ROOT / "skills" / "intake" / "prepare-task" / "scripts" / "prepare_task.py"
 SCHEMAS = ROOT / "schemas"
 
 
