@@ -71,7 +71,8 @@ def test_root_skill_frontmatter_is_portable() -> None:
 def test_root_skill_names_only_paths_that_exist() -> None:
     root = Path(__file__).resolve().parents[1]
     text = (root / "SKILL.md").read_text(encoding="utf-8")
-    referenced = set(re.findall(r"`([a-z-]+/(?:[a-z-]+/)*[A-Za-z_.-]+\.(?:md|py|json|yaml))`", text))
+    path_pattern = r"`([a-z-]+/(?:[a-z-]+/)*[A-Za-z_.-]+\.(?:md|py|json|yaml))`"
+    referenced = set(re.findall(path_pattern, text))
 
     assert "inspect-repository/SKILL.md" in referenced
     missing = sorted(path for path in referenced if not (root / path).is_file())
