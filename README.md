@@ -106,6 +106,32 @@ pull request.
 | `revise-pull-request` | Address feedback with fast-forward commits. Never rewrites. |
 | `completion-report` | Validate every artifact and report contradictions between them. |
 
+## Install as a Skill
+
+The repository root is also one installable skill, `software-factory-gpt`.
+Its `SKILL.md` routes a request to the right stage, and the same files work in
+Claude Code and in OpenAI Codex. `agents/openai.yaml` adds Codex's UI metadata,
+and Claude Code ignores it.
+
+```bash
+python installer/scripts/install_skill.py --dry-run   # show what would be written
+python installer/scripts/install_skill.py             # install for both agents
+```
+
+By default it installs into `~/.claude/skills/software-factory-gpt` and
+`~/.codex/skills/software-factory-gpt`. `CLAUDE_CONFIG_DIR` and `CODEX_HOME`
+change those locations. `--target claude` or `--target codex` installs for one
+agent only, and `--skills-dir PATH` installs into a directory you name, such as
+a project's `.claude/skills`.
+
+The installer copies an allowlist: the router, the stage directories,
+`schemas/`, `standards/`, `docs/`, `factory-map/`, and `AGENTS.md`. Tests, CI,
+and packaging files are not installed. It refuses to overwrite an existing
+directory. Pass `--replace` to update a previous install; it still refuses to
+replace any directory that is not this skill. Each install records its source
+commit in `.install.json`. Re-run the installer after pulling changes, because
+installed copies do not update themselves.
+
 ## Documentation
 
 `AGENTS.md` is the normative document. It states the rules an agent must
