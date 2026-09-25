@@ -37,8 +37,11 @@ subtracting what the document already answers, and the intake summary template.
 1. Read the requirements index first. Build the list of what is already known.
 2. Derive candidate questions from the categories in the reference file.
 3. Remove every question the specification answers unambiguously.
-4. Convert each specification-answered constraint into a confirmation question
-   only when its status as mandatory or preferred affects implementation.
+4. Settle whether each named constraint binds. When the specification states
+   it with binding wording (must, shall, required, mandatory), record it as
+   mandatory with its section as the source, and do not ask. Ask a confirmation
+   question only when the specification names the constraint without saying
+   whether it binds.
 5. Add every `UNKNOWN` and `CONFLICT` that blocks a major area of work.
 6. Ask the remaining questions in one organized, numbered batch.
 7. Record each answer as a `DEC-<NNN>` decision with question, decision, reason,
@@ -60,13 +63,18 @@ Wrong, when the specification names the stack:
 What backend do you want?
 ```
 
-Right:
+Right, when the specification names PHP/Laravel and MySQL but does not say
+whether they are required:
 
 ```text
-The specification requires PHP/Laravel and MySQL.
+The specification names PHP/Laravel and MySQL.
 Should these be treated as mandatory constraints, or are architectural
 changes allowed?
 ```
+
+Right, when the specification says the backend must be Laravel: ask nothing
+about it. Record Laravel as mandatory, citing the section. Asking would repeat a
+question the document already answered.
 
 Ask a question only when a different answer would produce different code. Do not
 ask every category. Do not ask one trivial question per turn.
@@ -79,7 +87,8 @@ Regardless of what the document says, the interview must establish:
 - whether the project is greenfield or an existing codebase
 - the default or base branch
 - whether the factory may create branches and open pull requests
-- whether the named stack is mandatory or preferred
+- whether the named stack is mandatory or preferred. Binding wording in the
+  specification establishes this without a question.
 - where the application will be deployed, or that this is undecided
 - the testing expected before a pull request
 - which integrations must stay mocked or blocked
@@ -187,7 +196,7 @@ Return a project context shaped like:
       "decision_id": "DEC-001",
       "question": "Is Laravel mandatory?",
       "decision": "Yes. Laravel must be used.",
-      "reason": "Customer technical specification.",
+      "reason": "The specification names Laravel but does not say whether it is required.",
       "source": "User confirmation during project intake.",
       "date": "2026-09-15",
       "related_requirements": ["REQ-TECH-001"],

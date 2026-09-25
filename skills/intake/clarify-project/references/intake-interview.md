@@ -13,16 +13,22 @@ Read the requirements index first. Then, for each candidate question:
 3. Would a wrong assumption here be expensive to undo? If yes, ask it, even if
    the answer seems obvious.
 
-A specification-answered constraint still deserves one question, but a different
-one — whether it binds:
+A constraint the specification names but does not qualify deserves one
+question, but a different one: whether it binds.
 
 ```text
-The specification requires PHP/Laravel and MySQL.
+The specification names PHP/Laravel and MySQL.
 Should these be treated as mandatory constraints, or are architectural
 changes allowed?
 ```
 
-That is a confirmation question. "What backend do you want?" is an admission
+That is a confirmation question. Ask it only when the document is silent on
+binding force. When the specification says "must", "shall", "required", or
+"mandatory", the binding question is already answered: record the constraint as
+mandatory and cite the section. Asking again tells the client the document was
+not read.
+
+ "What backend do you want?" is an admission
 that the document was not read.
 
 ## Batch, Do Not Drip
@@ -46,7 +52,8 @@ Draw from these categories. Ask only what survives the subtraction rule.
 
 ### Technology
 
-- Is the specified stack mandatory or preferred?
+- Is the specified stack mandatory or preferred? Ask only when the
+  specification does not say.
 - Which framework and language versions are targeted?
 - Which database, and is the choice fixed?
 - Server-rendered, SPA, or hybrid?
@@ -134,7 +141,7 @@ Decision:
 Yes. Laravel must be used.
 
 Reason:
-Customer technical specification.
+The specification names Laravel but does not say whether it is required.
 
 Source:
 User confirmation during project intake.
