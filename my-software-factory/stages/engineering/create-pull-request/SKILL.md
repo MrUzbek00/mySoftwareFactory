@@ -57,7 +57,7 @@ The deterministic workflow is:
 Example CLI:
 
 ```bash
-python skills/engineering/create-pull-request/scripts/open_pull_request.py \
+python stages/engineering/create-pull-request/scripts/open_pull_request.py \
   --worktree /path/to/worktrees/TASK-123-password-reset \
   --task-id TASK-123 \
   --base main \

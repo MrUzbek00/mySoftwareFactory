@@ -34,7 +34,7 @@ comment you disagree with.
 ## Workflow
 
 1. Fetch the current review threads with
-   `skills/engineering/review-pull-request/scripts/fetch_pull_request.py`.
+   `stages/engineering/review-pull-request/scripts/fetch_pull_request.py`.
 2. List every unresolved thread and decide for each: address, or decline with a
    reason.
 3. Implement the accepted changes in the task worktree, under the rules in
@@ -48,7 +48,7 @@ comment you disagree with.
 Example push:
 
 ```bash
-python skills/engineering/revise-pull-request/scripts/push_revision.py \
+python stages/engineering/revise-pull-request/scripts/push_revision.py \
   --worktree /path/to/worktrees/TASK-123-password-reset \
   --task-id TASK-123 \
   --pr 42

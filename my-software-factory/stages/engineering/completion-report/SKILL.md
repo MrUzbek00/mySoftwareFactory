@@ -50,7 +50,7 @@ The deterministic workflow is:
 Example CLI:
 
 ```bash
-python skills/engineering/completion-report/scripts/build_report.py \
+python stages/engineering/completion-report/scripts/build_report.py \
   --task-id TASK-123 \
   --schemas-dir schemas \
   --artifact inspect-repository=/artifacts/TASK-123/context.json \

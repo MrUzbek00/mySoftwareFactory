@@ -18,7 +18,7 @@ def parse_frontmatter(path: Path) -> dict[str, str]:
 
 def test_skill_frontmatter_is_present_and_matches_directory() -> None:
     root = Path(__file__).resolve().parents[1]
-    skill_paths = sorted(root.glob("skills/*/*/SKILL.md"))
+    skill_paths = sorted(root.glob("my-software-factory/stages/*/*/SKILL.md"))
     by_phase: dict[str, list[str]] = {}
     for path in skill_paths:
         by_phase.setdefault(path.parent.parent.name, []).append(path.parent.name)
@@ -46,7 +46,9 @@ def test_skill_frontmatter_is_present_and_matches_directory() -> None:
             "start-from-spec",
         ],
     }
-    assert sorted(path.parent.name for path in root.glob("*/SKILL.md")) == []
+    # The skill is one folder: its router is the only SKILL.md outside stages/.
+    assert sorted(path.parent.name for path in root.glob("*/SKILL.md")) == ["my-software-factory"]
+    assert not (root / "SKILL.md").exists()
 
     for path in skill_paths:
         metadata = parse_frontmatter(path)
@@ -54,14 +56,15 @@ def test_skill_frontmatter_is_present_and_matches_directory() -> None:
         assert metadata["description"]
 
 
-# Claude Code and Codex both load a skill from its root SKILL.md. Codex's
-# validator is the stricter of the two, so the root frontmatter is held to it.
+# Claude Code and Codex both load a skill from the SKILL.md at the top of its
+# folder. Codex's validator is the stricter of the two, so the router's
+# frontmatter is held to it.
+SKILL_DIR = Path(__file__).resolve().parents[1] / "my-software-factory"
 PORTABLE_FRONTMATTER_KEYS = {"name", "description", "license", "allowed-tools", "metadata"}
 
 
 def test_root_skill_frontmatter_is_portable() -> None:
-    root = Path(__file__).resolve().parents[1]
-    text = (root / "SKILL.md").read_text(encoding="utf-8")
+    text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
     lines = text.splitlines()
     assert lines[0] == "---"
     frontmatter = lines[1 : lines[1:].index("---") + 1]
@@ -69,7 +72,7 @@ def test_root_skill_frontmatter_is_portable() -> None:
     top_level = {line.partition(":")[0] for line in frontmatter if not line.startswith(" ")}
     assert top_level <= PORTABLE_FRONTMATTER_KEYS
 
-    metadata = parse_frontmatter(root / "SKILL.md")
+    metadata = parse_frontmatter(SKILL_DIR / "SKILL.md")
     assert metadata["name"] == "my-software-factory"
     description = metadata["description"]
     assert description
@@ -78,20 +81,18 @@ def test_root_skill_frontmatter_is_portable() -> None:
 
 
 def test_root_skill_names_only_paths_that_exist() -> None:
-    root = Path(__file__).resolve().parents[1]
-    text = (root / "SKILL.md").read_text(encoding="utf-8")
+    text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
     path_pattern = r"`([a-z-]+/(?:[a-z-]+/)*[A-Za-z_.-]+\.(?:md|py|json|yaml))`"
     referenced = set(re.findall(path_pattern, text))
 
-    assert "skills/engineering/inspect-repository/SKILL.md" in referenced
-    missing = sorted(path for path in referenced if not (root / path).is_file())
+    assert "stages/engineering/inspect-repository/SKILL.md" in referenced
+    missing = sorted(path for path in referenced if not (SKILL_DIR / path).is_file())
     assert missing == []
 
 
 def test_codex_interface_metadata_names_the_skill() -> None:
-    root = Path(__file__).resolve().parents[1]
     fields = {}
-    for line in (root / "agents" / "openai.yaml").read_text(encoding="utf-8").splitlines():
+    for line in (SKILL_DIR / "agents" / "openai.yaml").read_text(encoding="utf-8").splitlines():
         key, separator, value = line.strip().partition(":")
         if separator and value.strip():
             fields[key] = value.strip().strip('"')

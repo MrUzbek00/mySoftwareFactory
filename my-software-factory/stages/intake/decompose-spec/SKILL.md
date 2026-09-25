@@ -57,7 +57,7 @@ dependency conventions.
 Use `scripts/check_backlog.py` rather than reasoning about consistency by hand.
 
 ```bash
-python skills/intake/decompose-spec/scripts/check_backlog.py \
+python stages/intake/decompose-spec/scripts/check_backlog.py \
   --project-context .factory/project.json \
   --requirements .factory/requirements.json \
   --backlog .factory/backlog.json \

@@ -8,7 +8,8 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "skills" / "engineering" / "isolate-task" / "scripts" / "create_worktree.py"
+STAGES = ROOT / "my-software-factory" / "stages"
+SCRIPT = STAGES / "engineering" / "isolate-task" / "scripts" / "create_worktree.py"
 GIT_AVAILABLE = shutil.which("git") is not None
 
 

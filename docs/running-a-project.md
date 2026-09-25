@@ -83,8 +83,8 @@ when survives the change.
 
 ## A Worked Example
 
-`docs/examples/spec-driven-project.md` walks through the whole path on a
+`my-software-factory/examples/spec-driven-project.md` walks through the whole path on a
 fictional project, including what the readiness gate refuses and why.
 
-`docs/examples/sample-task.md` shows the other entry point: one scoped task
+`my-software-factory/examples/sample-task.md` shows the other entry point: one scoped task
 entering at `inspect-repository`, with the artifacts the first stages produce.

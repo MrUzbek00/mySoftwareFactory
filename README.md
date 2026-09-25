@@ -76,19 +76,24 @@ This repository is not:
 
 ## Repository Layout
 
+The skill is one folder. Everything around it keeps the project healthy.
+
 ```text
-SKILL.md                 root router: installs the repository as one skill
-AGENTS.md                the normative rules for agent behavior
-agents/openai.yaml       Codex UI metadata for the skill
-skills/
-  intake/                5 stages: a specification to READY tasks
-  engineering/           12 stages: one task to a reviewed pull request
-schemas/                 artifact contracts, one file per artifact
-standards/               criteria shared by several stages
+my-software-factory/     THE SKILL: install it by copying this folder
+  SKILL.md               router: sends each request to the right stage
+  agents/openai.yaml     Codex UI metadata (Claude Code ignores it)
+  stages/
+    intake/              5 stages: a specification to READY tasks
+    engineering/         12 stages: one task to a reviewed pull request
+  schemas/               artifact contracts, one file per artifact
+  standards/             criteria shared by several stages
+  examples/              worked examples, one per entry point
+
+AGENTS.md                the rules; the installer copies them into the skill
 tools/
   factory-map/           the local pipeline map
   installer/             installs the skill for Claude Code and Codex
-docs/                    explanation, walkthroughs, and indexes
+docs/                    explanation for people maintaining the project
 tests/                   the suite that holds the structure in place
 ```
 
@@ -97,7 +102,8 @@ enforce part of the stage, `scripts/`.
 
 ## Current Skills
 
-Specification intake, in `skills/intake/`, turns a project-level document into scoped work. It runs
+Specification intake, in `my-software-factory/stages/intake/`, turns a
+project-level document into scoped work. It runs
 only when the input is a specification; a single ticket skips it entirely.
 
 | Skill | Purpose |
@@ -108,7 +114,8 @@ only when the input is a specification; a single ticket skips it entirely.
 | `decompose-spec` | Turn confirmed requirements into epics, features, and implementation-sized tasks. |
 | `prepare-task` | Hand one READY task to the engineering workflow, refusing anything else. |
 
-Engineering, in `skills/engineering/`, takes one scoped task from an unfamiliar repository to a reviewed
+Engineering, in `my-software-factory/stages/engineering/`, takes one scoped
+task from an unfamiliar repository to a reviewed
 pull request.
 
 | Skill | Purpose |
@@ -128,10 +135,10 @@ pull request.
 
 ## Install as a Skill
 
-The repository root is also one installable skill, `my-software-factory`.
-Its `SKILL.md` routes a request to the right stage, and the same files work in
-Claude Code and in OpenAI Codex. `agents/openai.yaml` adds Codex's UI metadata,
-and Claude Code ignores it.
+`my-software-factory/` is one installable skill. Its `SKILL.md` routes a
+request to the right stage, and the same files work in Claude Code and in
+OpenAI Codex. `agents/openai.yaml` adds Codex's UI metadata, and Claude Code
+ignores it.
 
 ```bash
 python tools/installer/scripts/install_skill.py --dry-run   # show what would be written
@@ -144,10 +151,10 @@ change those locations. `--target claude` or `--target codex` installs for one
 agent only, and `--skills-dir PATH` installs into a directory you name, such as
 a project's `.claude/skills`.
 
-The installer copies an allowlist: the router, `skills/`, `schemas/`,
-`standards/`, `docs/`, `tools/factory-map/`, and `AGENTS.md`. Tests, CI,
-packaging files, and the installer itself are not installed. It refuses to overwrite an existing
-directory. Pass `--replace` to update a previous install; it still refuses to
+The installer copies the `my-software-factory/` folder as it is, and adds
+`AGENTS.md` and `LICENSE` from the repository root. Nothing else is installed:
+not tests, CI, docs, tools, or packaging files. It refuses to overwrite an
+existing directory. Pass `--replace` to update a previous install; it still refuses to
 replace any directory that is not this skill. Each install records its source
 commit in `.install.json`. Re-run the installer after pulling changes, because
 installed copies do not update themselves.
@@ -168,8 +175,8 @@ follow, and no other document restates them.
 | `docs/architecture.md` | how skills, scripts, schemas, and standards fit together |
 | `docs/schemas.md` | the schema index: which stage writes each artifact contract |
 | `docs/running-a-project.md` | a specification to a completion report, end to end |
-| `standards/backend-code-quality.md` | the criteria backend code the factory writes must satisfy |
-| `docs/examples/` | two worked examples, one per entry point |
+| `my-software-factory/standards/backend-code-quality.md` | the criteria backend code the factory writes must satisfy |
+| `my-software-factory/examples/` | two worked examples, one per entry point |
 | `tools/factory-map/README.md` | the local pipeline map: how to run it, how it derives state |
 
 ## Pipeline Map

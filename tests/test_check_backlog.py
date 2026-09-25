@@ -15,8 +15,9 @@ from typing import Any
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "skills" / "intake" / "decompose-spec" / "scripts" / "check_backlog.py"
-SCHEMAS = ROOT / "schemas"
+STAGES = ROOT / "my-software-factory" / "stages"
+SCRIPT = STAGES / "intake" / "decompose-spec" / "scripts" / "check_backlog.py"
+SCHEMAS = ROOT / "my-software-factory" / "schemas"
 
 
 def run_script(payloads: dict[str, Any], directory: Path) -> tuple[int, dict[str, Any]]:

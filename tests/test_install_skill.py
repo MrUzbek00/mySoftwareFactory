@@ -20,7 +20,7 @@ def run_installer(*args: str, env: dict[str, str] | None = None) -> tuple[int, d
     return result.returncode, json.loads(result.stdout)
 
 
-def test_installs_the_allowlisted_payload(tmp_path: Path) -> None:
+def test_installs_the_skill_folder_with_the_rules(tmp_path: Path) -> None:
     code, result = run_installer("--skills-dir", str(tmp_path))
 
     assert code == 0, result
@@ -28,21 +28,25 @@ def test_installs_the_allowlisted_payload(tmp_path: Path) -> None:
     assert result["installs"][0]["action"] == "created"
 
     installed = tmp_path / SKILL
-    assert (installed / "SKILL.md").is_file()
-    assert (installed / "agents" / "openai.yaml").is_file()
-    assert (installed / "standards" / "backend-code-quality.md").is_file()
-    assert (installed / "schemas" / "change-plan.schema.json").is_file()
-    validate_change = installed / "skills" / "engineering" / "validate-change"
-    assert (validate_change / "scripts" / "run_validation.py").is_file()
-    stages = sorted(path.relative_to(ROOT) for path in ROOT.glob("skills/*/*/SKILL.md"))
-    assert len(stages) == 17
-    installed_stages = sorted(
-        path.relative_to(installed) for path in installed.glob("skills/*/*/SKILL.md")
+    skill_dir = ROOT / "my-software-factory"
+    source_files = sorted(
+        path.relative_to(skill_dir)
+        for path in skill_dir.rglob("*")
+        if path.is_file() and "__pycache__" not in path.parts
     )
-    assert installed_stages == stages
-    assert (installed / "tools" / "factory-map" / "scripts" / "serve_map.py").is_file()
+    installed_files = sorted(
+        path.relative_to(installed)
+        for path in installed.rglob("*")
+        if path.is_file() and path.name not in {"AGENTS.md", "LICENSE", ".install.json"}
+    )
+    assert installed_files == source_files
+    assert len(list(installed.glob("stages/*/*/SKILL.md"))) == 17
+    assert (installed / "AGENTS.md").read_text(encoding="utf-8") == (
+        (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+    )
+    assert (installed / "LICENSE").is_file()
 
-    for excluded in ("tests", "tools/installer", ".github", "pyproject.toml", ".gitignore"):
+    for excluded in ("tests", "tools", "docs", ".github", "pyproject.toml", "README.md"):
         assert not (installed / excluded).exists(), excluded
     assert not list(installed.rglob("__pycache__"))
 

@@ -87,7 +87,7 @@ The deterministic workflow is:
 Example CLI:
 
 ```bash
-python skills/engineering/isolate-task/scripts/create_worktree.py \
+python stages/engineering/isolate-task/scripts/create_worktree.py \
   --repo /path/to/project \
   --task-id TASK-123 \
   --type feature \
