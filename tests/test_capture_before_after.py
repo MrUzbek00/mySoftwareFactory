@@ -79,7 +79,7 @@ def run_script(repo: Path, *extra_args: str) -> tuple[int, dict]:
 
 
 def probe() -> str:
-    return f"demo={sys.executable} demo.py"
+    return f'demo="{sys.executable}" demo.py'
 
 
 def test_behavior_change_is_captured_on_both_sides(repo: Path) -> None:

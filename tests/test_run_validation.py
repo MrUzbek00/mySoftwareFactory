@@ -76,11 +76,11 @@ def run_script(repo: Path, *extra_args: str) -> tuple[int, dict]:
 
 
 def passing_check() -> str:
-    return f'ok={sys.executable} -c "pass"'
+    return f'ok="{sys.executable}" -c "pass"'
 
 
 def failing_check() -> str:
-    return f'boom={sys.executable} -c "import sys; sys.exit(3)"'
+    return f'boom="{sys.executable}" -c "import sys; sys.exit(3)"'
 
 
 def test_passing_check_reports_pass(repo: Path) -> None:
