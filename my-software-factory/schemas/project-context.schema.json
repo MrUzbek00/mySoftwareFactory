@@ -1,0 +1,250 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/my-software-factory/project-context.schema.json",
+  "title": "ProjectContext",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "project_id",
+    "project_name",
+    "status",
+    "confirmed_at",
+    "source_specifications",
+    "repository",
+    "stack",
+    "architecture_constraints",
+    "database",
+    "frontend",
+    "authentication",
+    "roles",
+    "integrations",
+    "environment",
+    "deployment",
+    "testing",
+    "security",
+    "business_rules",
+    "delivery",
+    "decisions",
+    "open_questions",
+    "blocked_requirements",
+    "amendments",
+    "generated_at"
+  ],
+  "properties": {
+    "project_id": { "type": "string", "pattern": "^[A-Z][A-Z0-9]{1,9}$" },
+    "project_name": { "type": "string", "minLength": 1 },
+    "status": { "type": "string", "enum": ["draft", "confirmed"] },
+    "confirmed_at": { "type": ["string", "null"] },
+    "source_specifications": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source_id", "title", "location", "format", "version"],
+        "properties": {
+          "source_id": { "type": "string", "pattern": "^SPEC-[0-9]+$" },
+          "title": { "type": "string", "minLength": 1 },
+          "location": { "type": "string", "minLength": 1 },
+          "format": {
+            "type": "string",
+            "enum": ["docx", "pdf", "md", "txt", "html", "link", "other"]
+          },
+          "version": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "url",
+        "path",
+        "exists",
+        "project_type",
+        "base_branch",
+        "may_create_branches",
+        "may_open_pull_requests",
+        "create_issues"
+      ],
+      "properties": {
+        "url": { "type": ["string", "null"] },
+        "path": { "type": ["string", "null"] },
+        "exists": { "type": "boolean" },
+        "project_type": {
+          "type": "string",
+          "enum": ["greenfield", "existing", "unknown"]
+        },
+        "base_branch": { "type": ["string", "null"] },
+        "may_create_branches": { "type": "boolean" },
+        "may_open_pull_requests": { "type": "boolean" },
+        "create_issues": { "type": "boolean" }
+      }
+    },
+    "stack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mandatory", "preferred", "prohibited"],
+      "properties": {
+        "mandatory": { "$ref": "#/$defs/stringArray" },
+        "preferred": { "$ref": "#/$defs/stringArray" },
+        "prohibited": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "architecture_constraints": { "$ref": "#/$defs/stringArray" },
+    "database": { "$ref": "#/$defs/stringArray" },
+    "frontend": { "$ref": "#/$defs/stringArray" },
+    "authentication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mechanism", "identity_provider", "notes"],
+      "properties": {
+        "mechanism": { "type": ["string", "null"] },
+        "identity_provider": { "type": ["string", "null"] },
+        "notes": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "roles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "description", "source_requirements"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "description": { "type": "string" },
+          "source_requirements": { "$ref": "#/$defs/stringArray" }
+        }
+      }
+    },
+    "integrations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "status", "notes"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "status": {
+            "type": "string",
+            "enum": ["available", "mocked", "blocked", "unknown"]
+          },
+          "notes": { "type": "string" }
+        }
+      }
+    },
+    "environment": { "$ref": "#/$defs/stringArray" },
+    "deployment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["targets", "environments", "ci_cd", "notes"],
+      "properties": {
+        "targets": { "$ref": "#/$defs/stringArray" },
+        "environments": { "$ref": "#/$defs/stringArray" },
+        "ci_cd": { "$ref": "#/$defs/stringArray" },
+        "notes": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "testing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["levels", "minimum_before_pull_request", "quality_gates"],
+      "properties": {
+        "levels": { "$ref": "#/$defs/stringArray" },
+        "minimum_before_pull_request": { "$ref": "#/$defs/stringArray" },
+        "quality_gates": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "security": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["constraints", "compliance", "audit_logging", "data_retention"],
+      "properties": {
+        "constraints": { "$ref": "#/$defs/stringArray" },
+        "compliance": { "$ref": "#/$defs/stringArray" },
+        "audit_logging": { "$ref": "#/$defs/stringArray" },
+        "data_retention": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "business_rules": { "$ref": "#/$defs/stringArray" },
+    "delivery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scope", "priorities", "milestones", "incremental", "definition_of_done"],
+      "properties": {
+        "scope": { "type": "string", "enum": ["mvp", "full", "unknown"] },
+        "priorities": { "$ref": "#/$defs/stringArray" },
+        "milestones": { "$ref": "#/$defs/stringArray" },
+        "incremental": { "type": "boolean" },
+        "definition_of_done": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "decision_id",
+          "question",
+          "decision",
+          "reason",
+          "source",
+          "date",
+          "related_requirements",
+          "supersedes"
+        ],
+        "properties": {
+          "decision_id": { "type": "string", "pattern": "^DEC-[0-9]{3,}$" },
+          "question": { "type": "string", "minLength": 1 },
+          "decision": { "type": "string", "minLength": 1 },
+          "reason": { "type": "string", "minLength": 1 },
+          "source": { "type": "string", "minLength": 1 },
+          "date": { "type": "string", "minLength": 1 },
+          "related_requirements": { "$ref": "#/$defs/stringArray" },
+          "supersedes": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "open_questions": { "$ref": "#/$defs/stringArray" },
+    "blocked_requirements": { "$ref": "#/$defs/stringArray" },
+    "amendments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "amendment_id",
+          "received",
+          "source",
+          "summary",
+          "affected_requirements",
+          "affected_decisions",
+          "affected_tasks",
+          "completed_work_impact",
+          "status"
+        ],
+        "properties": {
+          "amendment_id": { "type": "string", "pattern": "^AMD-[0-9]{3,}$" },
+          "received": { "type": "string", "minLength": 1 },
+          "source": { "type": "string", "minLength": 1 },
+          "summary": { "type": "string", "minLength": 1 },
+          "affected_requirements": { "$ref": "#/$defs/stringArray" },
+          "affected_decisions": { "$ref": "#/$defs/stringArray" },
+          "affected_tasks": { "$ref": "#/$defs/stringArray" },
+          "completed_work_impact": { "$ref": "#/$defs/stringArray" },
+          "status": {
+            "type": "string",
+            "enum": ["OPEN", "APPLIED", "REJECTED"]
+          }
+        }
+      }
+    },
+    "generated_at": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "stringArray": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

@@ -1,7 +1,0 @@
-interface:
-  display_name: "Software Factory GPT"
-  short_description: "Auditable spec-to-pull-request coding pipeline"
-  default_prompt: "Use $software-factory-gpt to take this task through inspection, planning, an isolated worktree, validated changes, and one pull request."
-
-policy:
-  allow_implicit_invocation: true

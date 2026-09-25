@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/my-software-factory/before-after-report.schema.json",
+  "title": "BeforeAfterReport",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "status",
+    "task_id",
+    "branch",
+    "base_commit",
+    "head_commit",
+    "probes",
+    "differences_detected",
+    "generated_at"
+  ],
+  "properties": {
+    "status": { "type": "string", "enum": ["captured", "partial"] },
+    "task_id": { "type": "string", "pattern": "^TASK-[A-Z0-9]+(?:-[A-Z0-9]+)*$" },
+    "branch": { "type": "string", "minLength": 1 },
+    "base_commit": { "type": "string", "minLength": 1 },
+    "head_commit": { "type": "string", "minLength": 1 },
+    "probes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "command", "before", "after", "changed"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "command": { "type": "string", "minLength": 1 },
+          "before": { "$ref": "#/$defs/observation" },
+          "after": { "$ref": "#/$defs/observation" },
+          "changed": { "type": "boolean" }
+        }
+      }
+    },
+    "differences_detected": { "type": "boolean" },
+    "generated_at": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "exit_code", "output_tail"],
+      "properties": {
+        "status": { "type": "string", "enum": ["ran", "timeout", "not_run"] },
+        "exit_code": { "type": ["integer", "null"] },
+        "output_tail": { "type": "string" }
+      }
+    }
+  }
+}

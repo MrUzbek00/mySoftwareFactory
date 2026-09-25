@@ -1,0 +1,7 @@
+interface:
+  display_name: "MySoftware Factory"
+  short_description: "Auditable spec-to-pull-request coding pipeline"
+  default_prompt: "Use $my-software-factory to take this task through inspection, planning, an isolated worktree, validated changes, and one pull request."
+
+policy:
+  allow_implicit_invocation: true

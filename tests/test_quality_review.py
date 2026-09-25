@@ -20,8 +20,9 @@ from typing import Any
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "validate-change" / "scripts" / "run_validation.py"
-SCHEMAS = ROOT / "schemas"
+STAGES = ROOT / "my-software-factory" / "stages"
+SCRIPT = STAGES / "engineering" / "validate-change" / "scripts" / "run_validation.py"
+SCHEMAS = ROOT / "my-software-factory" / "schemas"
 GIT_AVAILABLE = shutil.which("git") is not None
 
 
@@ -343,7 +344,8 @@ def test_malformed_review_json_is_refused(repo: Path, tmp_path: Path) -> None:
 
 def test_standard_covers_every_criterion_the_script_accepts() -> None:
     """The slug vocabulary is the contract between the standard and the gate."""
-    standard = (ROOT / "standards" / "backend-code-quality.md").read_text(encoding="utf-8")
+    standard_path = ROOT / "my-software-factory" / "standards" / "backend-code-quality.md"
+    standard = standard_path.read_text(encoding="utf-8")
     schema = json.loads((SCHEMAS / "validation-report.schema.json").read_text(encoding="utf-8"))
     criteria = schema["properties"]["code_quality"]["properties"]["findings"]["items"][
         "properties"

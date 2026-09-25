@@ -15,8 +15,10 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-OPEN_PR = ROOT / "create-pull-request" / "scripts" / "open_pull_request.py"
-PUSH_REVISION = ROOT / "revise-pull-request" / "scripts" / "push_revision.py"
+STAGES = ROOT / "my-software-factory" / "stages"
+ENGINEERING = STAGES / "engineering"
+OPEN_PR = ENGINEERING / "create-pull-request" / "scripts" / "open_pull_request.py"
+PUSH_REVISION = ENGINEERING / "revise-pull-request" / "scripts" / "push_revision.py"
 GIT_AVAILABLE = shutil.which("git") is not None
 
 

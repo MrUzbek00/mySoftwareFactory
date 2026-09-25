@@ -13,8 +13,9 @@ from typing import Any
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "prepare-task" / "scripts" / "prepare_task.py"
-SCHEMAS = ROOT / "schemas"
+STAGES = ROOT / "my-software-factory" / "stages"
+SCRIPT = STAGES / "intake" / "prepare-task" / "scripts" / "prepare_task.py"
+SCHEMAS = ROOT / "my-software-factory" / "schemas"
 
 
 def run_script(

@@ -1,0 +1,176 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/my-software-factory/requirements-index.schema.json",
+  "title": "RequirementsIndex",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "project_id",
+    "sources",
+    "requirements",
+    "unknowns",
+    "conflicts",
+    "generated_at"
+  ],
+  "properties": {
+    "project_id": { "$ref": "#/$defs/projectId" },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source_id", "title", "location", "format", "version", "received"],
+        "properties": {
+          "source_id": { "type": "string", "pattern": "^SPEC-[0-9]+$" },
+          "title": { "type": "string", "minLength": 1 },
+          "location": { "type": "string", "minLength": 1 },
+          "format": {
+            "type": "string",
+            "enum": ["docx", "pdf", "md", "txt", "html", "link", "other"]
+          },
+          "version": { "type": ["string", "null"] },
+          "received": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "requirements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "requirement_id",
+          "title",
+          "statement",
+          "category",
+          "state",
+          "priority",
+          "sources",
+          "related_requirements",
+          "open_questions",
+          "conflicts",
+          "notes"
+        ],
+        "properties": {
+          "requirement_id": { "$ref": "#/$defs/requirementId" },
+          "title": { "type": "string", "minLength": 1 },
+          "statement": { "type": "string", "minLength": 1 },
+          "category": {
+            "type": "string",
+            "enum": [
+              "functional",
+              "non-functional",
+              "security",
+              "authorization",
+              "data",
+              "reporting",
+              "integration",
+              "ui-ux",
+              "operational",
+              "deployment",
+              "documentation",
+              "unknown"
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "CONFIRMED",
+              "CLARIFIED",
+              "AMBIGUOUS",
+              "BLOCKED",
+              "OPTIONAL",
+              "OUT_OF_SCOPE"
+            ]
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["MUST", "SHOULD", "COULD", "WONT", "UNSPECIFIED"]
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["source_id", "section", "subsection", "page", "quote"],
+              "properties": {
+                "source_id": { "type": "string", "pattern": "^SPEC-[0-9]+$" },
+                "section": { "type": ["string", "null"] },
+                "subsection": { "type": ["string", "null"] },
+                "page": { "type": ["string", "null"] },
+                "quote": { "type": ["string", "null"] }
+              }
+            }
+          },
+          "related_requirements": { "$ref": "#/$defs/stringArray" },
+          "open_questions": { "$ref": "#/$defs/stringArray" },
+          "conflicts": { "$ref": "#/$defs/stringArray" },
+          "notes": { "type": "string" }
+        }
+      }
+    },
+    "unknowns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "unknown_id",
+          "related_requirements",
+          "question",
+          "impact",
+          "status",
+          "resolved_by"
+        ],
+        "properties": {
+          "unknown_id": { "type": "string", "pattern": "^UNKNOWN-[0-9]{3,}$" },
+          "related_requirements": { "$ref": "#/$defs/stringArray" },
+          "question": { "type": "string", "minLength": 1 },
+          "impact": { "type": "string", "minLength": 1 },
+          "status": {
+            "type": "string",
+            "enum": ["NEEDS_USER_DECISION", "ANSWERED", "DEFERRED"]
+          },
+          "resolved_by": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "conflicts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "conflict_id",
+          "requirement_a",
+          "requirement_b",
+          "reason",
+          "decision_required",
+          "status",
+          "resolved_by"
+        ],
+        "properties": {
+          "conflict_id": { "type": "string", "pattern": "^CONFLICT-[0-9]{3,}$" },
+          "requirement_a": { "$ref": "#/$defs/requirementId" },
+          "requirement_b": { "$ref": "#/$defs/requirementId" },
+          "reason": { "type": "string", "minLength": 1 },
+          "decision_required": { "type": "string", "minLength": 1 },
+          "status": { "type": "string", "enum": ["OPEN", "RESOLVED"] },
+          "resolved_by": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "generated_at": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "projectId": { "type": "string", "pattern": "^[A-Z][A-Z0-9]{1,9}$" },
+    "requirementId": {
+      "type": "string",
+      "pattern": "^REQ-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+    },
+    "stringArray": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

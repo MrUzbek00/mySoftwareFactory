@@ -1,6 +1,6 @@
-# Software Factory Skills
+# MySoftware Factory
 
-`software-factory-skills` is a reusable skills library for controlled AI
+`my-software-factory` is a reusable skills library for controlled AI
 software-engineering workflows. It defines small, auditable procedures that
 future coding agents can follow before they are allowed to modify code.
 
@@ -60,8 +60,7 @@ human owns the merge.
 
 ## What This Repository Is
 
-This repository is a foundational skills layer for a future AI Software
-Factory. It contains operational instructions, structured output contracts,
+This repository is the foundational skills layer for MySoftware Factory. It contains operational instructions, structured output contracts,
 schemas, safety rules, examples, and deterministic scripts that future agents
 can use as building blocks.
 
@@ -75,9 +74,36 @@ This repository is not:
 - a CI/CD platform
 - a production deployment system
 
+## Repository Layout
+
+The skill is one folder. Everything around it keeps the project healthy.
+
+```text
+my-software-factory/     THE SKILL: install it by copying this folder
+  SKILL.md               router: sends each request to the right stage
+  agents/openai.yaml     Codex UI metadata (Claude Code ignores it)
+  stages/
+    intake/              5 stages: a specification to READY tasks
+    engineering/         12 stages: one task to a reviewed pull request
+  schemas/               artifact contracts, one file per artifact
+  standards/             criteria shared by several stages
+  examples/              worked examples, one per entry point
+
+AGENTS.md                the rules; the installer copies them into the skill
+tools/
+  factory-map/           the local pipeline map
+  installer/             installs the skill for Claude Code and Codex
+docs/                    explanation for people maintaining the project
+tests/                   the suite that holds the structure in place
+```
+
+Each stage directory holds `SKILL.md`, `references/`, and, where software can
+enforce part of the stage, `scripts/`.
+
 ## Current Skills
 
-Specification intake turns a project-level document into scoped work. It runs
+Specification intake, in `my-software-factory/stages/intake/`, turns a
+project-level document into scoped work. It runs
 only when the input is a specification; a single ticket skips it entirely.
 
 | Skill | Purpose |
@@ -88,7 +114,8 @@ only when the input is a specification; a single ticket skips it entirely.
 | `decompose-spec` | Turn confirmed requirements into epics, features, and implementation-sized tasks. |
 | `prepare-task` | Hand one READY task to the engineering workflow, refusing anything else. |
 
-Engineering takes one scoped task from an unfamiliar repository to a reviewed
+Engineering, in `my-software-factory/stages/engineering/`, takes one scoped
+task from an unfamiliar repository to a reviewed
 pull request.
 
 | Skill | Purpose |
@@ -108,29 +135,33 @@ pull request.
 
 ## Install as a Skill
 
-The repository root is also one installable skill, `software-factory-gpt`.
-Its `SKILL.md` routes a request to the right stage, and the same files work in
-Claude Code and in OpenAI Codex. `agents/openai.yaml` adds Codex's UI metadata,
-and Claude Code ignores it.
+`my-software-factory/` is one installable skill. Its `SKILL.md` routes a
+request to the right stage, and the same files work in Claude Code and in
+OpenAI Codex. `agents/openai.yaml` adds Codex's UI metadata, and Claude Code
+ignores it.
 
 ```bash
-python installer/scripts/install_skill.py --dry-run   # show what would be written
-python installer/scripts/install_skill.py             # install for both agents
+python tools/installer/scripts/install_skill.py --dry-run   # show what would be written
+python tools/installer/scripts/install_skill.py             # install for both agents
 ```
 
-By default it installs into `~/.claude/skills/software-factory-gpt` and
-`~/.codex/skills/software-factory-gpt`. `CLAUDE_CONFIG_DIR` and `CODEX_HOME`
+By default it installs into `~/.claude/skills/my-software-factory` and
+`~/.codex/skills/my-software-factory`. `CLAUDE_CONFIG_DIR` and `CODEX_HOME`
 change those locations. `--target claude` or `--target codex` installs for one
 agent only, and `--skills-dir PATH` installs into a directory you name, such as
 a project's `.claude/skills`.
 
-The installer copies an allowlist: the router, the stage directories,
-`schemas/`, `standards/`, `docs/`, `factory-map/`, and `AGENTS.md`. Tests, CI,
-and packaging files are not installed. It refuses to overwrite an existing
-directory. Pass `--replace` to update a previous install; it still refuses to
+The installer copies the `my-software-factory/` folder as it is, and adds
+`AGENTS.md` and `LICENSE` from the repository root. Nothing else is installed:
+not tests, CI, docs, tools, or packaging files. It refuses to overwrite an
+existing directory. Pass `--replace` to update a previous install; it still refuses to
 replace any directory that is not this skill. Each install records its source
 commit in `.install.json`. Re-run the installer after pulling changes, because
 installed copies do not update themselves.
+
+This skill was called `software-factory-gpt` before. The installer reports an
+install under that name in `legacy_installs` but never deletes it. Remove it
+yourself, or both skills will load side by side.
 
 ## Documentation
 
@@ -144,18 +175,18 @@ follow, and no other document restates them.
 | `docs/architecture.md` | how skills, scripts, schemas, and standards fit together |
 | `docs/schemas.md` | the schema index: which stage writes each artifact contract |
 | `docs/running-a-project.md` | a specification to a completion report, end to end |
-| `standards/backend-code-quality.md` | the criteria backend code the factory writes must satisfy |
-| `docs/examples/` | two worked examples, one per entry point |
-| `factory-map/README.md` | the local pipeline map: how to run it, how it derives state |
+| `my-software-factory/standards/backend-code-quality.md` | the criteria backend code the factory writes must satisfy |
+| `my-software-factory/examples/` | two worked examples, one per entry point |
+| `tools/factory-map/README.md` | the local pipeline map: how to run it, how it derives state |
 
 ## Pipeline Map
 
-`factory-map/` serves an interactive map of the pipeline on the loopback
+`tools/factory-map/` serves an interactive map of the pipeline on the loopback
 interface. It draws the seventeen stages, the seven gates, and the state of
 each one, derived from the files on disk at request time.
 
 ```bash
-python factory-map/scripts/serve_map.py --port 8787
+python tools/factory-map/scripts/serve_map.py --port 8787
 ```
 
 Without a `.factory` directory it reports how completely each stage is built.

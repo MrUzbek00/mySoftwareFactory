@@ -1,7 +1,7 @@
 # Agent Constitution
 
 This repository defines the mandatory pre-implementation workflow for AI coding
-agents that operate inside future Software Factory systems.
+agents that operate inside future MySoftware Factory systems.
 
 ## Entry Routing
 
@@ -115,7 +115,8 @@ No pull request may be opened before:
 ## Coding Standards
 
 Backend code the factory writes must satisfy
-`standards/backend-code-quality.md`. `implement-change` applies it while writing;
+`standards/backend-code-quality.md` in the skill folder
+(`my-software-factory/` in this repository). `implement-change` applies it while writing;
 `validate-change` reviews changed backend files against it and fails on a
 `BLOCKING` finding; `review-pull-request` uses the same criteria.
 

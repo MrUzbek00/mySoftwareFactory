@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/my-software-factory/implementation-result.schema.json",
+  "title": "ImplementationResult",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "status",
+    "task_id",
+    "branch",
+    "worktree_path",
+    "steps_completed",
+    "steps_skipped",
+    "files_added",
+    "files_modified",
+    "files_deleted",
+    "tests_added",
+    "commits",
+    "plan_deviations",
+    "unknowns",
+    "blocked_reason",
+    "ready_for_validation"
+  ],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["implemented", "blocked"]
+    },
+    "task_id": {
+      "type": "string",
+      "pattern": "^TASK-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+    },
+    "branch": {
+      "type": "string",
+      "pattern": "^(feature|fix|refactor|chore|docs|test)/TASK-[A-Z0-9]+(?:-[A-Z0-9]+)*-[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "worktree_path": { "type": "string", "minLength": 1 },
+    "steps_completed": { "$ref": "#/$defs/stringArray" },
+    "steps_skipped": { "$ref": "#/$defs/stringArray" },
+    "files_added": { "$ref": "#/$defs/stringArray" },
+    "files_modified": { "$ref": "#/$defs/stringArray" },
+    "files_deleted": { "$ref": "#/$defs/stringArray" },
+    "tests_added": { "$ref": "#/$defs/stringArray" },
+    "commits": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sha", "message"],
+        "properties": {
+          "sha": { "type": "string", "minLength": 7 },
+          "message": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "plan_deviations": { "$ref": "#/$defs/stringArray" },
+    "unknowns": { "$ref": "#/$defs/stringArray" },
+    "blocked_reason": { "type": ["string", "null"] },
+    "ready_for_validation": { "type": "boolean" }
+  },
+  "$defs": {
+    "stringArray": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

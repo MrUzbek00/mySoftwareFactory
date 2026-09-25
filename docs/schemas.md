@@ -1,6 +1,6 @@
 # Schema Index
 
-`schemas/` holds one JSON Schema per artifact. Every stage that produces an
+`my-software-factory/schemas/` holds one JSON Schema per artifact. Every stage that produces an
 artifact validates it against the schema named here, and `completion-report`
 validates all of them again at the end.
 
@@ -49,19 +49,19 @@ the artifacts it points at belong to the stages that write them.
 
 | Schema | Written by | Read by |
 | --- | --- | --- |
-| `factory-map-state.schema.json` | `factory-map/scripts/build_state.py` | the map page, and `tests/test_build_state.py` |
+| `factory-map-state.schema.json` | `tools/factory-map/scripts/build_state.py` | the map page, and `tests/test_build_state.py` |
 
 This one is not a pipeline artifact. No stage produces it, `completion-report`
-never validates it, and its presence in `schemas/` is a convenience rather than
+never validates it, and its presence in `my-software-factory/schemas/` is a convenience rather than
 a claim that the map is part of the pipeline.
 
 ## The Audit Pass
 
-`completion-report/scripts/build_report.py` maps a stage name to a schema
+`my-software-factory/stages/engineering/completion-report/scripts/build_report.py` maps a stage name to a schema
 filename and revalidates every artifact it is given:
 
 ```bash
-python completion-report/scripts/build_report.py \
+python my-software-factory/stages/engineering/completion-report/scripts/build_report.py \
   --task-id TASK-123 \
   --schemas-dir schemas \
   --artifact plan-change=/artifacts/TASK-123/change-plan.json \
@@ -79,7 +79,7 @@ that writes them, and from `tests/test_json_schemas.py`.
 Every schema declares `$schema` as Draft 2020-12 and an `$id` of the form:
 
 ```text
-https://example.com/software-factory-skills/<artifact-name>.schema.json
+https://example.com/my-software-factory/<artifact-name>.schema.json
 ```
 
 The identifier is not resolved over the network. It exists so that a schema

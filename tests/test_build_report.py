@@ -6,8 +6,9 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "completion-report" / "scripts" / "build_report.py"
-SCHEMAS = ROOT / "schemas"
+STAGES = ROOT / "my-software-factory" / "stages"
+SCRIPT = STAGES / "engineering" / "completion-report" / "scripts" / "build_report.py"
+SCHEMAS = ROOT / "my-software-factory" / "schemas"
 
 BRANCH = "feature/TASK-123-password-reset"
 HEAD = "a" * 40

@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/my-software-factory/documentation-update.schema.json",
+  "title": "DocumentationUpdate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "status",
+    "task_id",
+    "branch",
+    "documents_updated",
+    "documents_reviewed_no_change",
+    "documents_out_of_scope",
+    "unknowns",
+    "generated_at"
+  ],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["updated", "no_change_required", "blocked"]
+    },
+    "task_id": { "type": "string", "pattern": "^TASK-[A-Z0-9]+(?:-[A-Z0-9]+)*$" },
+    "branch": { "type": "string", "minLength": 1 },
+    "documents_updated": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "reason"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "reason": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "documents_reviewed_no_change": { "$ref": "#/$defs/stringArray" },
+    "documents_out_of_scope": { "$ref": "#/$defs/stringArray" },
+    "unknowns": { "$ref": "#/$defs/stringArray" },
+    "generated_at": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "stringArray": { "type": "array", "items": { "type": "string" } }
+  }
+}

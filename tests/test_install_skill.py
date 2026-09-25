@@ -5,8 +5,8 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "installer" / "scripts" / "install_skill.py"
-SKILL = "software-factory-gpt"
+SCRIPT = ROOT / "tools" / "installer" / "scripts" / "install_skill.py"
+SKILL = "my-software-factory"
 
 
 def run_installer(*args: str, env: dict[str, str] | None = None) -> tuple[int, dict]:
@@ -20,7 +20,7 @@ def run_installer(*args: str, env: dict[str, str] | None = None) -> tuple[int, d
     return result.returncode, json.loads(result.stdout)
 
 
-def test_installs_the_allowlisted_payload(tmp_path: Path) -> None:
+def test_installs_the_skill_folder_with_the_rules(tmp_path: Path) -> None:
     code, result = run_installer("--skills-dir", str(tmp_path))
 
     assert code == 0, result
@@ -28,15 +28,25 @@ def test_installs_the_allowlisted_payload(tmp_path: Path) -> None:
     assert result["installs"][0]["action"] == "created"
 
     installed = tmp_path / SKILL
-    assert (installed / "SKILL.md").is_file()
-    assert (installed / "agents" / "openai.yaml").is_file()
-    assert (installed / "standards" / "backend-code-quality.md").is_file()
-    assert (installed / "schemas" / "change-plan.schema.json").is_file()
-    assert (installed / "validate-change" / "scripts" / "run_validation.py").is_file()
-    stages = sorted(path.parent.name for path in ROOT.glob("*/SKILL.md"))
-    assert sorted(path.parent.name for path in installed.glob("*/SKILL.md")) == stages
+    skill_dir = ROOT / "my-software-factory"
+    source_files = sorted(
+        path.relative_to(skill_dir)
+        for path in skill_dir.rglob("*")
+        if path.is_file() and "__pycache__" not in path.parts
+    )
+    installed_files = sorted(
+        path.relative_to(installed)
+        for path in installed.rglob("*")
+        if path.is_file() and path.name not in {"AGENTS.md", "LICENSE", ".install.json"}
+    )
+    assert installed_files == source_files
+    assert len(list(installed.glob("stages/*/*/SKILL.md"))) == 17
+    assert (installed / "AGENTS.md").read_text(encoding="utf-8") == (
+        (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+    )
+    assert (installed / "LICENSE").is_file()
 
-    for excluded in ("tests", "installer", ".github", "pyproject.toml", ".gitignore"):
+    for excluded in ("tests", "tools", "docs", ".github", "pyproject.toml", "README.md"):
         assert not (installed / excluded).exists(), excluded
     assert not list(installed.rglob("__pycache__"))
 
@@ -125,3 +135,15 @@ def test_refuses_to_install_inside_the_source(tmp_path: Path) -> None:
 
     assert code == 1
     assert result["error_code"] == "DESTINATION_OVERLAPS_SOURCE"
+
+
+def test_reports_but_keeps_a_legacy_install(tmp_path: Path) -> None:
+    legacy = tmp_path / "software-factory-gpt"
+    legacy.mkdir()
+    (legacy / "SKILL.md").write_text("---\nname: software-factory-gpt\n---\n", encoding="utf-8")
+
+    code, result = run_installer("--skills-dir", str(tmp_path))
+
+    assert code == 0, result
+    assert result["installs"][0]["legacy_installs"] == [str(legacy)]
+    assert (legacy / "SKILL.md").is_file()
