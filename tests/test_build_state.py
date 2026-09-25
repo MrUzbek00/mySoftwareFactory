@@ -15,7 +15,7 @@ from jsonschema import Draft202012Validator
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "tools" / "factory-map" / "scripts" / "build_state.py"
-STATE_SCHEMA = ROOT / "schemas" / "factory-map-state.schema.json"
+STATE_SCHEMA = ROOT / "my-software-factory" / "schemas" / "factory-map-state.schema.json"
 
 
 def load_module():
@@ -70,9 +70,11 @@ def test_build_status_comes_from_the_files_each_stage_has(tmp_path: Path) -> Non
 
     validate = node(state, "validate-change")
     assert validate["build"]["script"] == (
-        "skills/engineering/validate-change/scripts/run_validation.py"
+        "my-software-factory/stages/engineering/validate-change/scripts/run_validation.py"
     )
-    assert validate["build"]["schema"] == "schemas/validation-report.schema.json"
+    assert validate["build"]["schema"] == (
+        "my-software-factory/schemas/validation-report.schema.json"
+    )
     assert "tests/test_run_validation.py" in validate["build"]["tests"]
     assert validate["build"]["status"] == "built"
 
@@ -339,9 +341,8 @@ def test_the_scripts_view_takes_its_wording_from_the_architecture_document(
     rows = {row["script"]: row for row in state["views"]["scripts"]}
 
     assert len(rows) == 10
-    assert rows["skills/engineering/isolate-task/scripts/create_worktree.py"]["enforces"] == (
-        "safe branch naming, clean tree, no overwrite"
-    )
+    isolate = "my-software-factory/stages/engineering/isolate-task/scripts/create_worktree.py"
+    assert rows[isolate]["enforces"] == "safe branch naming, clean tree, no overwrite"
 
 
 def test_an_unplaced_skill_directory_is_reported_rather_than_dropped(tmp_path: Path) -> None:

@@ -41,7 +41,7 @@ Use `scripts/prepare_task.py`. The gate is enforced by the script, not by
 judgment.
 
 ```bash
-python skills/intake/prepare-task/scripts/prepare_task.py \
+python stages/intake/prepare-task/scripts/prepare_task.py \
   --project-context .factory/project.json \
   --requirements .factory/requirements.json \
   --backlog .factory/backlog.json \

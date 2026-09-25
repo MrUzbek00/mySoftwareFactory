@@ -54,7 +54,7 @@ The deterministic workflow is:
 Example CLI:
 
 ```bash
-python skills/engineering/before-after/scripts/capture_before_after.py \
+python stages/engineering/before-after/scripts/capture_before_after.py \
   --worktree /path/to/worktrees/TASK-123-password-reset \
   --task-id TASK-123 \
   --base origin/main \

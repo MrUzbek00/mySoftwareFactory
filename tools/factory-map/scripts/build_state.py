@@ -23,6 +23,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+# Stage files cite schemas relative to the skill root, as schemas/<name>.schema.json.
 SCHEMA_REFERENCE = re.compile(r"schemas/([a-z0-9-]+)\.schema\.json")
 OUTPUT_CONTRACT = re.compile(r"^## Output Contract$(.*?)(?=^## |\Z)", re.MULTILINE | re.DOTALL)
 PURPOSE = re.compile(r"^## Purpose$(.*?)(?=^## |\Z)", re.MULTILINE | re.DOTALL)
@@ -81,10 +82,11 @@ LANES: tuple[dict[str, Any], ...] = (
 #
 # `artifact` is the filename this map looks for. Where `artifact_source` is
 # "repository" the name is documented: project.json, requirements.json and
-# backlog.json by skills/intake/start-from-spec/SKILL.md, task-handoff.json by
-# skills/intake/prepare-task/SKILL.md, and the nine stage artifacts by
-# skills/engineering/completion-report/references/audit-trail.md. Where it is "factory-map" the
-# repository documents no filename for that stage and this map chose one.
+# backlog.json by the start-from-spec stage, task-handoff.json by the
+# prepare-task stage, and the nine stage artifacts by the completion-report
+# stage's references/audit-trail.md (stages live under my-software-factory/stages/).
+# Where it is "factory-map" the repository documents no filename for that stage
+# and this map chose one.
 STAGES: tuple[dict[str, Any], ...] = (
     {
         "id": "start-from-spec",
@@ -243,18 +245,19 @@ STAGES: tuple[dict[str, Any], ...] = (
 
 STAGE_IDS: tuple[str, ...] = tuple(stage["id"] for stage in STAGES)
 
-# Stages live under skills/<phase>/<stage id>/. Intake turns a specification
+# Stages live under my-software-factory/stages/<phase>/<stage id>/. Intake turns a specification
 # into READY tasks; engineering carries one task to a pull request.
 INTAKE_STAGE_IDS = frozenset(
     {"start-from-spec", "ingest-requirements", "clarify-project", "decompose-spec", "prepare-task"}
 )
-SKILL_GLOB = "skills/*/*/SKILL.md"
+SKILL_ROOT = "my-software-factory"
+SKILL_GLOB = f"{SKILL_ROOT}/stages/*/*/SKILL.md"
 
 
 def stage_directory(stage_id: str) -> str:
     """Return the repository-relative directory that holds one stage."""
     phase = "intake" if stage_id in INTAKE_STAGE_IDS else "engineering"
-    return f"skills/{phase}/{stage_id}"
+    return f"{SKILL_ROOT}/stages/{phase}/{stage_id}"
 
 LOOP_CAPTION = (
     "THE LOOP - FEEDBACK · FAST-FORWARD COMMITS · REVALIDATE · NEVER REWRITE"
@@ -524,7 +527,7 @@ def validate_payload(payload: dict[str, Any], schema_path: Path) -> tuple[bool, 
 
     jsonschema is a development dependency, not a runtime one, so this falls
     back to a required-key check when it is not installed - the same
-    compromise skills/engineering/completion-report/scripts/build_report.py makes.
+    compromise the completion-report stage's scripts/build_report.py makes.
     """
     schema, reason = read_json(schema_path)
     if schema is None:
@@ -586,7 +589,7 @@ def scan_skill(repo: Path, stage: dict[str, Any]) -> dict[str, Any]:
     )
 
     contract_schemas = sorted(set(SCHEMA_REFERENCE.findall(section_text(OUTPUT_CONTRACT, text))))
-    detail["schemas"] = [f"schemas/{name}.schema.json" for name in contract_schemas]
+    detail["schemas"] = [f"{SKILL_ROOT}/schemas/{name}.schema.json" for name in contract_schemas]
     if len(contract_schemas) == 1:
         detail["own_schema"] = detail["schemas"][0]
     return detail
@@ -1210,7 +1213,7 @@ def schemas_view(
         if detail["own_schema"]
     }
     rows: list[dict[str, Any]] = []
-    for path in sorted((repo / "schemas").glob("*.schema.json")):
+    for path in sorted((repo / SKILL_ROOT / "schemas").glob("*.schema.json")):
         relative = path.relative_to(repo).as_posix()
         stage_id = owner.get(relative)
         record = records.get(stage_id) if stage_id else None

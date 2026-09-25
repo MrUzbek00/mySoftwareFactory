@@ -76,7 +76,7 @@ This is why validation is a script rather than a prompt: a model can be
 convinced that tests passed, and a process cannot.
 
 **Code quality.** `validate-change` reviews changed backend files against
-`standards/backend-code-quality.md`. A `BLOCKING` finding fails validation and
+`my-software-factory/standards/backend-code-quality.md`. A `BLOCKING` finding fails validation and
 blocks publication. An `ADVISORY` finding is recorded and changes nothing.
 
 **Security.** The scan reads added lines only, and redacts secret material on

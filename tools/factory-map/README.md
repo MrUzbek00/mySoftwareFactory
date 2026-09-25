@@ -51,7 +51,7 @@ traversal attempt to reach.
 python tools/factory-map/scripts/build_state.py --repo . --out state.json
 ```
 
-Its output is validated by `schemas/factory-map-state.schema.json`. That schema
+Its output is validated by `my-software-factory/schemas/factory-map-state.schema.json`. That schema
 describes tooling output; it is not a pipeline artifact contract like the other
 sixteen.
 
@@ -87,7 +87,7 @@ builds a path to that script.
 
 That last rule is stricter than it looks, on purpose. A test counts only when
 it reaches the script as a path, the way `tests/test_quality_review.py` does
-with `ROOT / "skills" / "engineering" / "validate-change" / "scripts" / "run_validation.py"`. Naming a
+with `ROOT / "my-software-factory" / "stages" / "engineering" / "validate-change" / "scripts" / "run_validation.py"`. Naming a
 script inside a string does not count, and `tests/test_repository_structure.py`
 is excluded entirely, because it lists every script path to assert the file
 exists - which is not the same as running it.
@@ -157,12 +157,12 @@ and the map reports what the schema already decided.
 ## Where the Artifacts Are Looked For
 
 Project artifacts are read from `<factory>/project.json`, `requirements.json`
-and `backlog.json`, which `skills/intake/start-from-spec/SKILL.md` documents. Task artifacts
-are read from `<factory>/tasks/<TASK-ID>/`, which `skills/intake/prepare-task/SKILL.md`
+and `backlog.json`, which `my-software-factory/stages/intake/start-from-spec/SKILL.md` documents. Task artifacts
+are read from `<factory>/tasks/<TASK-ID>/`, which `my-software-factory/stages/intake/prepare-task/SKILL.md`
 documents for `task-handoff.json`.
 
 The nine per-stage filenames come from
-`skills/engineering/completion-report/references/audit-trail.md`, which lists them under a generic
+`my-software-factory/stages/engineering/completion-report/references/audit-trail.md`, which lists them under a generic
 artifact root and says to keep them outside the repository being changed. The
 repository does not state that they live under `.factory/tasks/<TASK-ID>/`, so
 that is this map reading an implication, and `--factory` exists to point it

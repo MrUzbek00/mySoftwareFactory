@@ -46,7 +46,7 @@ The deterministic workflow is:
 Example CLI:
 
 ```bash
-python skills/engineering/review-pull-request/scripts/fetch_pull_request.py \
+python stages/engineering/review-pull-request/scripts/fetch_pull_request.py \
   --repo-path /path/to/project \
   --pr 42 \
   --out-dir /path/to/scratch

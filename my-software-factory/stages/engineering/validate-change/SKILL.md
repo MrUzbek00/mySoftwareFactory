@@ -53,7 +53,7 @@ The deterministic workflow is:
 Example CLI:
 
 ```bash
-python skills/engineering/validate-change/scripts/run_validation.py \
+python stages/engineering/validate-change/scripts/run_validation.py \
   --worktree /path/to/worktrees/TASK-123-password-reset \
   --task-id TASK-123 \
   --base origin/main \
@@ -64,7 +64,7 @@ Explicit checks override detection and are preferred when the repository
 documents its own commands:
 
 ```bash
-python skills/engineering/validate-change/scripts/run_validation.py \
+python stages/engineering/validate-change/scripts/run_validation.py \
   --worktree /path/to/worktrees/TASK-123-password-reset \
   --task-id TASK-123 \
   --base origin/main \
@@ -120,7 +120,7 @@ blocking findings and decides the gate; the review supplies the judgment it
 counts.
 
 ```bash
-python skills/engineering/validate-change/scripts/run_validation.py \
+python stages/engineering/validate-change/scripts/run_validation.py \
   --worktree /path/to/worktrees/TASK-123-password-reset \
   --task-id TASK-123 \
   --base origin/main \

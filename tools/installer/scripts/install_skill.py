@@ -1,4 +1,4 @@
-"""Install this repository as the my-software-factory skill for Claude Code and Codex."""
+"""Install the my-software-factory skill folder for Claude Code and Codex."""
 
 from __future__ import annotations
 
@@ -18,10 +18,11 @@ SKILL_NAME = "my-software-factory"
 LEGACY_NAMES = ("software-factory-gpt",)
 MANIFEST_NAME = ".install.json"
 
-# The payload is an allowlist: repository infrastructure (tests, CI, packaging,
-# local caches, working notes) never reaches an installed skill.
-PAYLOAD_FILES = ("SKILL.md", "AGENTS.md", "README.md", "LICENSE")
-PAYLOAD_DIRS = ("agents", "docs", "schemas", "standards", "skills", "tools/factory-map")
+# The skill is one folder in the repository. An install is that folder, plus the
+# repository's rules and license, which live at the root so that agents working
+# in the repository load them too. Tests, CI, docs, and tools never ship.
+SKILL_DIR = SKILL_NAME
+ROOT_FILES = ("AGENTS.md", "LICENSE")
 REQUIRED_FILES = ("SKILL.md", "agents/openai.yaml")
 IGNORED_NAMES = shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo")
 
@@ -69,15 +70,17 @@ def read_skill_name(skill_md: Path) -> str | None:
 
 
 def payload_entries(source: Path) -> list[Path]:
-    """List the top-level files and directories that make up the installed skill."""
-    missing = [name for name in REQUIRED_FILES if not (source / name).is_file()]
+    """Return the skill folder followed by the root files copied beside its contents."""
+    skill_dir = source / SKILL_DIR
+    missing = [
+        *(f"{SKILL_DIR}/{name}" for name in REQUIRED_FILES if not (skill_dir / name).is_file()),
+        *(name for name in ROOT_FILES if not (source / name).is_file()),
+    ]
     if missing:
         raise ScriptError("SOURCE_INCOMPLETE", f"Source is missing: {', '.join(missing)}.")
-    if read_skill_name(source / "SKILL.md") != SKILL_NAME:
+    if read_skill_name(skill_dir / "SKILL.md") != SKILL_NAME:
         raise ScriptError("SOURCE_INVALID", f"Source SKILL.md is not named {SKILL_NAME}.")
-
-    names = [*PAYLOAD_FILES, *PAYLOAD_DIRS]
-    return [source / name for name in names if (source / name).exists()]
+    return [skill_dir, *(source / name for name in ROOT_FILES)]
 
 
 def count_files(entries: list[Path]) -> int:
@@ -157,21 +160,15 @@ def plan_install(source: Path, target: str, skills_root: Path, replace: bool) ->
     return {"target": target, "path": str(destination), "action": "replace"}
 
 
-def copy_payload(source: Path, entries: list[Path], staging: Path) -> None:
-    """Copy each entry to the same relative path it has in the source."""
-    staging.mkdir(parents=True)
-    for entry in entries:
-        target = staging / entry.relative_to(source)
-        if entry.is_dir():
-            shutil.copytree(entry, target, ignore=IGNORED_NAMES)
-        else:
-            target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(entry, target)
+def copy_payload(entries: list[Path], staging: Path) -> None:
+    """Copy the skill folder's contents to the staging root, then the root files beside them."""
+    skill_dir, *root_files = entries
+    shutil.copytree(skill_dir, staging, ignore=IGNORED_NAMES)
+    for path in root_files:
+        shutil.copy2(path, staging / path.name)
 
 
-def install(
-    source: Path, entries: list[Path], destination: Path, manifest: dict[str, Any]
-) -> None:
+def install(entries: list[Path], destination: Path, manifest: dict[str, Any]) -> None:
     """Stage the payload beside the destination, then swap it in."""
     staging = destination.with_name(f".{SKILL_NAME}.staging-{os.getpid()}")
     previous = destination.with_name(f".{SKILL_NAME}.previous-{os.getpid()}")
@@ -179,7 +176,7 @@ def install(
         raise ScriptError("STAGING_EXISTS", f"Leftover staging directory near {destination}.")
 
     try:
-        copy_payload(source, entries, staging)
+        copy_payload(entries, staging)
         (staging / MANIFEST_NAME).write_text(
             json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
         )
@@ -256,7 +253,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             ),
         }
         for plan in plans:
-            install(source, entries, Path(plan["path"]), manifest)
+            install(entries, Path(plan["path"]), manifest)
 
     for plan in plans:
         plan["action"] = f"would_{plan['action']}" if args.dry_run else DONE[plan["action"]]
