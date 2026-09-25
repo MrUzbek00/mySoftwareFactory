@@ -4,6 +4,9 @@ REQUIRED_PATHS = [
     "README.md",
     "AGENTS.md",
     "LICENSE",
+    "SKILL.md",
+    "agents/openai.yaml",
+    "installer/scripts/install_skill.py",
     "pyproject.toml",
     ".gitignore",
     ".editorconfig",
@@ -89,6 +92,7 @@ REQUIRED_PATHS = [
     "tests/test_quality_review.py",
     "tests/test_build_state.py",
     "tests/test_serve_map.py",
+    "tests/test_install_skill.py",
 ]
 
 

@@ -48,11 +48,14 @@ is a prompt, and consequence is code.
 
 ```text
 AGENTS.md                the normative rules for agent behavior
+SKILL.md                 the root router that makes the repository one skill
+agents/openai.yaml       Codex UI metadata for that skill
 README.md                entry point and orientation
 standards/               criteria shared by several stages
 schemas/                 artifact contracts, one file per artifact
 docs/                    explanation, walkthroughs, and indexes
 factory-map/             tooling: the local pipeline map
+installer/               tooling: installs the skill for Claude Code and Codex
 tests/                   the suite that holds the structure in place
 .github/workflows/       continuous integration
 
@@ -88,6 +91,15 @@ files on disk rather than from anything written into the page. It reads the
 repository and the run-state directory and writes to neither.
 `factory-map/README.md` documents what each status means and which file and
 field produces it.
+
+`installer/` is the second. It copies an allowlisted payload into the skills
+directories that Claude Code and Codex scan, and refuses to overwrite anything
+that is not a previous install of this skill.
+
+The root `SKILL.md` is not a stage, and the `*/SKILL.md` glob never matches
+it. It routes a request to the stage where it belongs. The procedures stay in
+the stage files, so an agent that installs the repository as one skill loads a
+single stage file at a time.
 
 ## Deterministic Scripts
 
