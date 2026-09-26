@@ -254,11 +254,11 @@ my-software-factory/     THE SKILL: this is what gets installed
   schemas/               the JSON format of every record the stages write
   standards/             the backend code-quality standard
   examples/              two worked examples, one per way in
+  map/                   the pipeline map; opens in your browser when the skill runs
 
 AGENTS.md                the rules every agent must follow (also installed)
 tools/
   installer/             installs the skill for Claude Code and Codex
-  factory-map/           the local pipeline map
 docs/                    in-depth documentation
 tests/                   the test suite
 ```
@@ -280,24 +280,29 @@ stage, it also has a `scripts/` folder.
 | [`docs/schemas.md`](docs/schemas.md) | which stage writes which record |
 | [`my-software-factory/examples/`](my-software-factory/examples/) | two worked examples: a single task and a specification |
 | [`my-software-factory/standards/backend-code-quality.md`](my-software-factory/standards/backend-code-quality.md) | the standard backend code must meet |
-| [`tools/factory-map/README.md`](tools/factory-map/README.md) | the pipeline map in detail |
+| [`my-software-factory/map/README.md`](my-software-factory/map/README.md) | the pipeline map in detail |
 
 ---
 
 ## Pipeline map
 
 A read-only web page, served only on your own machine, that draws the pipeline
-and colours each stage by what the records on disk say. Run it from this
-repository's root:
+and colours each stage by what the records on disk say. It ships inside the
+skill and opens in your browser by itself: the first thing the skill does on
+every use is run
 
 ```bash
-python tools/factory-map/scripts/serve_map.py --open
-python tools/factory-map/scripts/serve_map.py --open --factory path/to/project/.factory
+python my-software-factory/map/scripts/open_map.py
 ```
 
-The first command shows how complete each stage's implementation is. The second
-shows where each task in that project has got to, and every status names the
-file and field it came from. The map writes nothing and runs nothing.
+from your project, which serves that project's `.factory/` and opens the page.
+A map already open for the project is reused, not started twice. Run the same
+command yourself to reopen it, with `--factory path/to/project/.factory` when
+the records live elsewhere.
+
+The page shows where each task has got to, a completion bar for the whole
+project, and the file and field behind every status. The map writes nothing and
+runs no stage.
 
 ---
 

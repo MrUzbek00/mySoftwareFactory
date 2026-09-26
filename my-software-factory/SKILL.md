@@ -58,9 +58,33 @@ completion-report     -> audited record
 STOP  <- a human owns the merge
 ```
 
+## Open the Map First
+
+Every time this skill is used, open the factory map before routing, so the user
+can watch the run in a browser:
+
+```bash
+python <skill-dir>/map/scripts/open_map.py
+```
+
+Run it from the project's working directory. It serves that directory's
+`.factory/`; pass `--factory <path>` when the artifact root is elsewhere. It
+returns within a few seconds and prints JSON:
+
+- `status` `started` or `reused`: the map is open at `url`. A map already
+  serving this project is reused, so running this on every use never starts a
+  second server. Tell the user the URL in one line.
+- `browser_opened` `false`: no browser could be opened, as in a remote or
+  headless session. Give the user the URL instead.
+- `status` `error`: say so in one line and carry on. The map is a read-only
+  viewer. It never gates or blocks a stage.
+
+Do this once per use of the skill, not once per stage. The map redraws itself
+as each stage writes its artifact.
+
 ## Entry Routing
 
-Route the request before doing anything else.
+Once the map is open, route the request before doing anything else.
 
 | Input | Enter at |
 | --- | --- |
@@ -125,6 +149,8 @@ sits beside them:
 - `examples/sample-task.md`: a worked single-task request.
 - `examples/spec-driven-project.md`: a worked spec-to-backlog path,
   including what the readiness gate refuses and why.
+- `map/`: the factory map, a read-only browser view of where a run has got to.
+  `map/README.md` says what each status means.
 
 ## Agent Portability
 
@@ -132,8 +158,8 @@ This skill runs unchanged in Claude Code and in OpenAI Codex. Only the host's
 mechanics differ, so the stage files are written in terms of what to do, not
 which tool to call.
 
-- **Paths.** A path that starts with `stages/`, `schemas/`, `standards/`, or
-  `examples/` is relative to the directory that contains this `SKILL.md`,
+- **Paths.** A path that starts with `stages/`, `schemas/`, `standards/`,
+  `examples/`, or `map/` is relative to the directory that contains this `SKILL.md`,
   wherever it appears. A bare `references/` or `scripts/` path inside
   a stage file is relative to that stage's directory. Resolve the skill
   directory to an absolute path once and run scripts by absolute path, because
@@ -153,7 +179,7 @@ which tool to call.
   step and stop. Do not route around the block with a different command.
 - **Artifacts.** Persist each stage's JSON with ordinary file writes, under
   `tasks/<TASK-ID>/` in the project artifact root. That directory is what
-  `completion-report` audits and what `factory-map` draws.
+  `completion-report` audits and what the map draws.
 
 ## Project Artifacts
 
@@ -190,10 +216,7 @@ enforce rules that prose cannot:
 | `stages/engineering/review-pull-request/scripts/fetch_pull_request.py` | read-only; cannot approve, merge, or comment |
 | `stages/engineering/revise-pull-request/scripts/push_revision.py` | fast-forward only; refuses a diverged branch |
 | `stages/engineering/completion-report/scripts/build_report.py` | schema validation and cross-artifact contradiction checks |
-
-The source repository also ships `tools/factory-map/`, optional tooling that is
-not part of this skill. It serves a read-only map of where a run has got to,
-derived from the artifact root.
+| `map/scripts/open_map.py` | one loopback map per project, reused rather than duplicated |
 
 ## Coding Standards
 

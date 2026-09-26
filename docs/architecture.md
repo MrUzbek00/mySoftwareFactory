@@ -61,11 +61,11 @@ my-software-factory/     the skill, and everything an agent needs to run it
   schemas/               artifact contracts, one file per artifact
   standards/             criteria shared by several stages
   examples/              worked examples, one per entry point
+  map/                   the local pipeline map, opened on every use
 
 AGENTS.md                the normative rules for agent behavior
 README.md                entry point and orientation
 tools/
-  factory-map/           the local pipeline map
   installer/             installs the skill for Claude Code and Codex
 docs/                    explanation for maintainers
 tests/                   the suite that holds the structure in place
@@ -104,23 +104,29 @@ only other `SKILL.md` is the router at the top of the skill folder. The skills n
 stage, or a stage in the wrong phase, fails the suite until someone changes that
 list on purpose.
 
-Non-skill tooling lives under `tools/`, outside the skill folder, and carries no
-`SKILL.md`.
+Non-skill tooling carries no `SKILL.md`.
 That single rule keeps the glob honest, keeps the skills catalogue meaningful,
-and lets a tool be added without arguing about whether it is a skill.
+and lets a tool be added without arguing about whether it is a skill. A tool
+that only maintainers run lives under `tools/`, outside the skill folder. A tool
+the skill itself runs ships inside it, because an installed skill can reach
+nothing else.
 
-`tools/factory-map/` is the first tool to follow it. It serves an interactive
-map of the pipeline on the loopback interface, deriving each stage's state from the
-files on disk rather than from anything written into the page. It reads the
-repository and the run-state directory and writes to neither.
-`tools/factory-map/README.md` documents what each status means and which file
-and field produces it.
+`my-software-factory/map/` is the tool the skill runs. The router's first step on
+every use is `map/scripts/open_map.py`, which serves an interactive map of the
+pipeline on the loopback interface and opens it in a browser. It reuses a map
+already serving the same project, so running it on every use never starts a
+second server. The map derives each stage's state from the files on disk rather
+than from anything written into the page. It reads the skill and the run-state
+directory and writes to neither. `my-software-factory/map/README.md` documents
+what each status means and which file and field produces it.
 
-`factory-map` stays out of the skill on purpose. It reads the repository's
-`tests/` and `docs/architecture.md` to report how completely each stage is
-built, and an installed skill has neither.
+The map also reads `tests/` and `docs/architecture.md` to report how completely
+each stage is built. An installed skill has neither. Without `tests/`, build
+status stops requiring a test per script and says so in a warning. Without the
+architecture document, the scripts view has no wording. Everything else works
+the same in an install.
 
-`tools/installer/` is the second. It copies `my-software-factory/`, plus
+`tools/installer/` is the one maintainer tool. It copies `my-software-factory/`, plus
 `AGENTS.md` and `LICENSE`, into the skills directories that Claude Code and
 Codex scan. It refuses to overwrite anything that is not a previous install of
 this skill.

@@ -26,6 +26,7 @@ from urllib.parse import parse_qs, urlparse
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from build_state import (  # noqa: E402
+    DEFAULT_REPO,
     STAGE_IDS,
     ScriptError,
     build_state,
@@ -132,7 +133,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Serve the factory pipeline map on the loopback interface.",
     )
-    parser.add_argument("--repo", default=".", help="Path to the repository root.")
+    parser.add_argument(
+        "--repo",
+        default=str(DEFAULT_REPO),
+        help="Folder that holds my-software-factory/. Defaults to the one this script ships in.",
+    )
     parser.add_argument(
         "--factory",
         default=None,

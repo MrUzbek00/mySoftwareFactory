@@ -5,7 +5,9 @@ agents that operate inside future MySoftware Factory systems.
 
 ## Entry Routing
 
-Route the request before doing anything else.
+Route the request before doing anything else. The one exception is opening the
+factory map (`map/scripts/open_map.py` in the skill folder). It is read-only, it
+never gates a stage, and a failure to open it never stops the workflow.
 
 | Input | Entry point |
 | --- | --- |
