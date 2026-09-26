@@ -1044,7 +1044,9 @@ COMPLETION_NAMES = ("completion.json", "completion-report.json")
 def completion_of(factory: Path, task_id: str) -> tuple[bool, dict[str, Any]]:
     """Whether a task is done, by the same rule the completion-report node uses."""
     task_dir = factory / "tasks" / task_id
-    name = next((name for name in COMPLETION_NAMES if (task_dir / name).is_file()), None)
+    name = next(
+        (candidate for candidate in COMPLETION_NAMES if (task_dir / candidate).is_file()), None
+    )
     if name is None:
         return False, evidence(COMPLETION_NAMES[-1], None, "absent")
     payload, reason = read_json(task_dir / name)
