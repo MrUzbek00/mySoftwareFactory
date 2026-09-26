@@ -222,3 +222,13 @@ carries the time of the last change it saw.
 
 State is never signalled by colour alone. A blocked card takes a rose border
 and its tag chip changes text, so the state survives being read without colour.
+
+The header carries a project completion bar: done tasks over every task in the
+task list, as a count and a percentage. It fills toward a chequered flag as
+tasks get done, and turns green when every task is done. It is hidden when the
+task list is empty.
+
+Every stage line shows its direction as dashes moving from the source stage to
+the target. The motion is decoration, not state: every line moves the same way
+whatever its run status. When the browser asks for reduced motion, the lines
+and the bar stay still.
