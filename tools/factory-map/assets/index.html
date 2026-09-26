@@ -137,7 +137,12 @@ tr.focused td { background: rgba(255, 77, 141, 0.08); }
 }
 .section-label:first-child { margin-top: 0; }
 
-select {
+/* ---------- task picker ---------- */
+
+.picker-button, .picker-option {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   width: 100%;
   background: #12141c;
   color: var(--text);
@@ -146,7 +151,34 @@ select {
   padding: 5px 7px;
   font-family: var(--mono);
   font-size: 10px;
+  text-align: left;
+  cursor: pointer;
 }
+
+.picker-button:hover, .picker-button:focus-visible { border-color: rgba(255, 255, 255, 0.22); outline: none; }
+.picker-caret { margin-left: auto; color: var(--dim); }
+
+.picker-list {
+  margin: 4px 0 0;
+  padding: 3px;
+  list-style: none;
+  max-height: 260px;
+  overflow-y: auto;
+  background: #12141c;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+
+.picker-option { border: none; border-radius: 3px; background: transparent; }
+.picker-option:hover, .picker-option:focus-visible { background: rgba(255, 255, 255, 0.05); outline: none; }
+.picker-option[aria-selected="true"] { background: rgba(255, 77, 141, 0.1); }
+
+.picker-id { white-space: nowrap; }
+.picker-title { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.task-mark { flex: none; width: 12px; font-size: 12px; font-weight: 700; line-height: 1; text-align: center; }
+.task-mark.done { color: #22c55e; }
+.task-mark.not-done { color: #ef4444; }
 
 /* ---------- state colours ---------- */
 
@@ -527,6 +559,7 @@ let focusedNode = null;
 let filterText = "";
 let etag = null;
 let lastChange = null;
+let taskMenuOpen = false;
 
 /* ---------------- rendering the graph ---------------- */
 
@@ -1051,6 +1084,64 @@ function table(headers, rows) {
   return `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
 }
 
+function taskMark(entry) {
+  const reason = `${entry.evidence.file}: ${entry.evidence.value}`;
+  return entry.done
+    ? `<span class="task-mark done" role="img" aria-label="done" title="${escapeHtml(reason)}">✓</span>`
+    : `<span class="task-mark not-done" role="img" aria-label="not done" title="${escapeHtml(reason)}">✗</span>`;
+}
+
+function taskLabel(entry) {
+  const title = entry.title ? `<span class="picker-title">${escapeHtml(entry.title)}</span>` : "";
+  return `${taskMark(entry)}<span class="picker-id">${escapeHtml(entry.task_id)}</span>${title}`;
+}
+
+function taskPicker(index, selected) {
+  const done = index.filter((entry) => entry.done).length;
+  const current = index.find((entry) => entry.task_id === selected);
+  const button = current ? taskLabel(current) : `<span class="picker-title">no task started</span>`;
+  const options = index.map((entry) =>
+    `<li><button class="picker-option" role="option" data-task="${escapeHtml(entry.task_id)}"` +
+    ` aria-selected="${entry.task_id === selected}">${taskLabel(entry)}</button></li>`
+  ).join("");
+  return `<div class="section-label">Tasks · ${done} done · ${index.length - done} not done</div>` +
+    `<div id="task-picker">` +
+    `<button id="task-button" class="picker-button" aria-haspopup="listbox" aria-expanded="${taskMenuOpen}">` +
+    `${button}<span class="picker-caret">${taskMenuOpen ? "▴" : "▾"}</span></button>` +
+    `<ul id="task-options" class="picker-list" role="listbox"${taskMenuOpen ? "" : " hidden"}>${options}</ul>` +
+    `</div>`;
+}
+
+function setTaskMenu(open) {
+  taskMenuOpen = open;
+  const list = el("task-options");
+  if (!list) return;
+  list.hidden = !open;
+  el("task-button").setAttribute("aria-expanded", String(open));
+  el("task-button").querySelector(".picker-caret").textContent = open ? "▴" : "▾";
+  if (open) (list.querySelector('[aria-selected="true"]') || list.querySelector("button")).focus();
+}
+
+function wireTaskPicker() {
+  const button = el("task-button");
+  if (!button) return;
+  button.addEventListener("click", () => setTaskMenu(!taskMenuOpen));
+  const options = [...el("task-options").querySelectorAll(".picker-option")];
+  options.forEach((option, i) => {
+    option.addEventListener("click", () => {
+      setTaskMenu(false);
+      button.focus();
+      if (option.dataset.task !== state.selected_task) load(option.dataset.task, true);
+    });
+    option.addEventListener("keydown", (event) => {
+      if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+      event.preventDefault();
+      const next = options[(i + (event.key === "ArrowDown" ? 1 : -1) + options.length) % options.length];
+      next.focus();
+    });
+  });
+}
+
 function cell(text, klass) { return { text: text === null || text === undefined ? "—" : text, klass: klass }; }
 function stateCell(value) { return { text: value, klass: "s-" + value }; }
 
@@ -1062,11 +1153,8 @@ function renderViews() {
   const views = state.views;
   let html = "";
 
-  if (state.tasks.length > 1) {
-    html += `<div class="section-label">Task</div><select id="task-select">` +
-      state.tasks.map((t) =>
-        `<option value="${escapeHtml(t)}"${t === state.selected_task ? " selected" : ""}>${escapeHtml(t)}</option>`
-      ).join("") + `</select>`;
+  if (state.task_index.length) {
+    html += taskPicker(state.task_index, state.selected_task);
   }
 
   if (activeTab === "run") {
@@ -1213,10 +1301,7 @@ function renderViews() {
     });
   });
 
-  const selector = el("task-select");
-  if (selector) {
-    selector.addEventListener("change", () => load(selector.value, true));
-  }
+  wireTaskPicker();
 
   el("tabs").querySelectorAll(".tab").forEach((tab) => {
     tab.addEventListener("click", () => {
@@ -1282,7 +1367,10 @@ function boot(initial) {
 function setupKeys() {
   window.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
-      if (el("search").classList.contains("on")) {
+      if (taskMenuOpen) {
+        setTaskMenu(false);
+        el("task-button").focus();
+      } else if (el("search").classList.contains("on")) {
         el("search").classList.remove("on");
         filterText = "";
         el("search-input").value = "";
@@ -1301,6 +1389,10 @@ function setupKeys() {
       el("search-input").focus();
     }
     if (event.key === "?") el("help").classList.toggle("on");
+  });
+
+  document.addEventListener("click", (event) => {
+    if (taskMenuOpen && !event.target.closest("#task-picker")) setTaskMenu(false);
   });
 
   el("search-input").addEventListener("input", (event) => {

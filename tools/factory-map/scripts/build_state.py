@@ -1026,6 +1026,58 @@ def discover_tasks(factory: Path) -> list[str]:
     return sorted(path.name for path in tasks_root.iterdir() if path.is_dir())
 
 
+def backlog_titles(factory: Path) -> dict[str, str]:
+    """Title of every task the backlog plans, keyed by task ID."""
+    payload, _ = read_json(factory / "backlog.json")
+    titles: dict[str, str] = {}
+    for task in (payload or {}).get("tasks") or []:
+        if isinstance(task, dict) and isinstance(task.get("task_id"), str):
+            titles[task["task_id"]] = task.get("title") or ""
+    return titles
+
+
+# The completion-report node reads completion.json, a name the repository never
+# documents; runs recorded so far write completion-report.json. Either counts.
+COMPLETION_NAMES = ("completion.json", "completion-report.json")
+
+
+def completion_of(factory: Path, task_id: str) -> tuple[bool, dict[str, Any]]:
+    """Whether a task is done, by the same rule the completion-report node uses."""
+    task_dir = factory / "tasks" / task_id
+    name = next((name for name in COMPLETION_NAMES if (task_dir / name).is_file()), None)
+    if name is None:
+        return False, evidence(COMPLETION_NAMES[-1], None, "absent")
+    payload, reason = read_json(task_dir / name)
+    if payload is None:
+        return False, evidence(name, None, reason or "unreadable")
+    status = payload.get("status")
+    inconsistencies = payload.get("inconsistencies") or []
+    done = status == "complete" and not inconsistencies
+    detail = status if not inconsistencies else f"{status}, {len(inconsistencies)} inconsistencies"
+    return done, evidence(name, "status", detail)
+
+
+def task_index(factory: Path, tasks: list[str]) -> list[dict[str, Any]]:
+    """Every task the backlog plans or a run has started, and whether it is done.
+
+    A backlog task with no run directory yet is listed as not done, so the
+    menu shows planned work beside finished work.
+    """
+    titles = backlog_titles(factory)
+    index: list[dict[str, Any]] = []
+    for task_id in sorted(set(titles) | set(tasks)):
+        done, mark = completion_of(factory, task_id)
+        index.append(
+            {
+                "task_id": task_id,
+                "title": titles.get(task_id) or None,
+                "done": done,
+                "evidence": mark,
+            }
+        )
+    return index
+
+
 def unmapped_skills(repo: Path) -> list[str]:
     """Skill directories the drawn pipeline does not place.
 
@@ -1064,7 +1116,9 @@ def build_state(repo: Path, factory: Path, task_id: str | None) -> dict[str, Any
         for name in ("project.json", "requirements.json", "backlog.json")
     )
     tasks = discover_tasks(factory) if factory_present else []
-    selected = task_id if task_id in tasks else (tasks[0] if tasks else None)
+    indexed = task_index(factory, tasks) if factory_present else []
+    known = {entry["task_id"] for entry in indexed}
+    selected = task_id if task_id in known else (tasks[0] if tasks else None)
 
     records: dict[str, dict[str, Any]] = {}
     nodes: list[dict[str, Any]] = []
@@ -1138,6 +1192,7 @@ def build_state(repo: Path, factory: Path, task_id: str | None) -> dict[str, Any
         "gates": gates,
         "terminal": {"id": "STOP", "label": "STOP — A HUMAN OWNS THE MERGE"},
         "tasks": tasks,
+        "task_index": indexed,
         "selected_task": selected,
         "warnings": [
             f"skill directory not placed on the map: {name}" for name in unmapped_skills(repo)

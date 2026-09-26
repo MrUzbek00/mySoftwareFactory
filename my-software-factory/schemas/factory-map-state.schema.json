@@ -17,6 +17,7 @@
     "gates",
     "terminal",
     "tasks",
+    "task_index",
     "selected_task",
     "warnings",
     "views"
@@ -217,6 +218,30 @@
       }
     },
     "tasks": { "type": "array", "items": { "type": "string" } },
+    "task_index": {
+      "description": "Every task the backlog plans or a run has started, and whether its completion report says it is done.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["task_id", "title", "done", "evidence"],
+        "properties": {
+          "task_id": { "type": "string", "minLength": 1 },
+          "title": { "type": ["string", "null"] },
+          "done": { "type": "boolean" },
+          "evidence": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["file", "field", "value"],
+            "properties": {
+              "file": { "type": ["string", "null"] },
+              "field": { "type": ["string", "null"] },
+              "value": {}
+            }
+          }
+        }
+      }
+    },
     "selected_task": { "type": ["string", "null"] },
     "warnings": { "type": "array", "items": { "type": "string" } },
     "views": {
