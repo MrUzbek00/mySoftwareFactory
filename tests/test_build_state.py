@@ -304,6 +304,67 @@ def test_more_than_one_task_is_selectable(factory_run: Callable) -> None:
     assert node(other, "validate-change")["run"]["status"] == "pending"
 
 
+def index_entry(state: dict[str, Any], task_id: str) -> dict[str, Any]:
+    return next(item for item in state["task_index"] if item["task_id"] == task_id)
+
+
+def test_the_task_index_lists_planned_backlog_tasks_as_not_done(factory_run: Callable) -> None:
+    state = state_for(factory_run())
+
+    # TASK-DEMO-011 is in the backlog but no run has started it.
+    assert state["tasks"] == ["TASK-DEMO-010"]
+    assert [item["task_id"] for item in state["task_index"]] == ["TASK-DEMO-010", "TASK-DEMO-011"]
+    planned = index_entry(state, "TASK-DEMO-011")
+    assert planned["done"] is False
+    assert planned["title"] == "Do the thing"
+    assert planned["evidence"] == {
+        "file": "completion-report.json",
+        "field": None,
+        "value": "absent",
+    }
+
+    # A planned task can be selected; it has nothing on disk, so every stage is pending.
+    chosen = state_for(factory_run(), "TASK-DEMO-011")
+    assert chosen["selected_task"] == "TASK-DEMO-011"
+    assert node(chosen, "inspect-repository")["run"]["status"] == "pending"
+
+
+def test_a_task_is_done_only_when_its_completion_report_says_complete(
+    factory_run: Callable,
+) -> None:
+    complete = {"status": "complete", "inconsistencies": []}
+    done = state_for(factory_run(overrides={"completion-report.json": complete}))
+    assert index_entry(done, "TASK-DEMO-010")["done"] is True
+    assert index_entry(done, "TASK-DEMO-010")["evidence"]["value"] == "complete"
+    assert index_entry(done, "TASK-DEMO-011")["done"] is False
+
+    incomplete = {"status": "incomplete", "inconsistencies": []}
+    state = state_for(factory_run(overrides={"completion-report.json": incomplete}))
+    assert index_entry(state, "TASK-DEMO-010")["done"] is False
+
+    contradicted = {"status": "complete", "inconsistencies": ["validation says fail"]}
+    state = state_for(factory_run(overrides={"completion-report.json": contradicted}))
+    assert index_entry(state, "TASK-DEMO-010")["done"] is False
+
+    # The name the completion-report node reads counts too.
+    state = state_for(factory_run(overrides={"completion.json": complete}))
+    assert index_entry(state, "TASK-DEMO-010")["done"] is True
+    assert index_entry(state, "TASK-DEMO-010")["evidence"]["file"] == "completion.json"
+
+
+def test_a_run_without_a_backlog_indexes_its_task_directories(factory_run: Callable) -> None:
+    state = state_for(factory_run(intake=False))
+
+    assert state["task_index"] == [
+        {
+            "task_id": "TASK-DEMO-010",
+            "title": None,
+            "done": False,
+            "evidence": {"file": "completion-report.json", "field": None, "value": "absent"},
+        }
+    ]
+
+
 def test_the_fingerprint_changes_when_an_artifact_changes(
     factory_run: Callable, make_security_review: Callable
 ) -> None:

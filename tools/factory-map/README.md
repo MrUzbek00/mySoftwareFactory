@@ -174,6 +174,28 @@ uses `review.json`, `revision.json` and `completion.json`, and the Artifacts
 view labels those rows `factory-map` rather than `repository` so the difference
 stays visible.
 
+## The Task List
+
+The side menu lists every task the backlog plans and every task a run has
+started, so planned work shows beside finished work. Each task carries a mark:
+
+| Mark | Means |
+| --- | --- |
+| green ✓ | done: its completion report has `status` `complete` and no `inconsistencies` |
+| red ✗ | not done: planned in `backlog.json` with no run yet, or started without a complete report |
+
+The list is `task_index` in the state. It is the union of `backlog.json`
+`tasks[].task_id`, with each title, and the directories under
+`<factory>/tasks/`. Done is read from `completion.json`, the name the
+completion-report node uses, or `completion-report.json`, the name runs have
+written so far. Hover a mark to see which file and value decided it. Done means
+the factory finished the task and a pull request awaits a human. It does not
+mean the pull request was merged.
+
+Choosing a planned task loads it like any other. Nothing exists on disk for it
+yet, so every stage reads `pending`. `tasks` still lists run directories only,
+and the default selection is still the first of them.
+
 ## The Page
 
 One HTML file with its markup, styles, and script inline. No build step, no
@@ -189,9 +211,10 @@ because SVG cannot wrap a line of text.
 | drag | pan |
 | scroll | zoom, with a zoom-to-fit control |
 | `/` | filter nodes by name or description |
-| Esc | close the panel, the filter, or the shortcut list |
+| Esc | close the task list, the panel, the filter, or the shortcut list |
 | `?` | the shortcut list |
 | click a side-menu row | focus the matching node on the canvas |
+| open the task list | choose a task; ↑ and ↓ move between tasks |
 
 The page polls `/api/state` every three seconds with the previous `ETag`. An
 unchanged repository answers `304` and nothing re-renders. The LIVE indicator
