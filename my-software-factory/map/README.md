@@ -4,27 +4,58 @@ An interactive map of the pipeline this repository defines, served from a local
 HTTP server. It draws the seventeen stages, the edges between them, and the
 seven gates, and it colours each stage by what the files on disk actually say.
 
-This is tooling, not a skill. It carries no `SKILL.md`, because a skill is a
-procedure an agent follows and this is a viewer a person runs. The rule is
-enforced rather than remembered: `tests/test_skill_metadata.py` asserts the
-exact list of seventeen skill directories, so an eighteenth directory with a
-`SKILL.md` fails the suite.
+It ships inside the skill so that an installed copy can open it, but it is a
+viewer, not a stage. It carries no `SKILL.md`, and the rule is enforced rather
+than remembered: `tests/test_skill_metadata.py` asserts the exact list of
+seventeen stage directories, so an eighteenth directory with a `SKILL.md` fails
+the suite.
 
-## Running It
+## Opening It
+
+The skill opens the map by itself. The router's first step on every use is:
 
 ```bash
-python tools/factory-map/scripts/serve_map.py --port 8787
+python <skill-dir>/map/scripts/open_map.py
+```
+
+Run from the project's working directory, it serves that directory's
+`.factory/`. It looks for a map already serving this project on ports 8787 to
+8796 and reuses it. Otherwise it takes the first free port in that range, starts
+`serve_map.py` detached so the map outlives the call, waits until it answers,
+and opens the browser. It prints JSON and returns within a few seconds.
+
+| Field | Means |
+| --- | --- |
+| `status` | `started`, `reused`, or `error` with an `error_code` |
+| `url` | where the map is |
+| `pid` | the server process, when this call started it |
+| `browser_opened` | `false` when no browser could be opened, as in a headless session |
+
+| Option | Effect |
+| --- | --- |
+| `--factory PATH` | Run-state directory. Default `.factory` in the working directory. |
+| `--port N` | First of the ten ports to reuse or claim. Default 8787. |
+| `--no-browser` | Find or start the map and print its URL without opening a browser. |
+
+Each project gets its own port, so several projects can have a map open at
+once. The server keeps running until you stop it: end the `pid` process, or
+the `python` process listening on the map's port.
+
+## Running the Server Directly
+
+```bash
+python my-software-factory/map/scripts/serve_map.py --port 8787
 ```
 
 It prints `http://127.0.0.1:8787` and serves the map there. The server binds
-the loopback interface explicitly and never any other. It reads the repository
+the loopback interface explicitly and never any other. It reads the skill
 and the factory directory, writes to neither, runs no subprocess, and executes
 no pipeline stage.
 
 | Option | Effect |
 | --- | --- |
 | `--port N` | Port on 127.0.0.1. Default 8787. `--port 0` picks a free one. |
-| `--repo PATH` | Repository root. Default the working directory. |
+| `--repo PATH` | Folder that holds `my-software-factory/`. Default the one these scripts ship in. |
 | `--factory PATH` | Run-state directory. Default `<repo>/.factory`. |
 | `--open` | Open the map in a browser once the server is up. |
 | `--once --out FILE` | Write a self-contained HTML snapshot instead of serving. |
@@ -48,7 +79,7 @@ traversal attempt to reach.
 `scripts/build_state.py` does the scanning and can be run on its own:
 
 ```bash
-python tools/factory-map/scripts/build_state.py --repo . --out state.json
+python my-software-factory/map/scripts/build_state.py --out state.json
 ```
 
 Its output is validated by `my-software-factory/schemas/factory-map-state.schema.json`. That schema
@@ -95,6 +126,10 @@ exists - which is not the same as running it.
 Applied honestly, that rule reports `review-pull-request` as `partial` today:
 nothing in `tests/` exercises `fetch_pull_request.py`. The map is meant to
 surface that, not to round it up.
+
+An installed skill ships without `tests/`, so there the map cannot see test
+coverage at all. It drops the test rule rather than marking every scripted
+stage `partial`, and the Run view carries a warning that says so.
 
 ## Run Status
 

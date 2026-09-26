@@ -46,6 +46,10 @@ def test_installs_the_skill_folder_with_the_rules(tmp_path: Path) -> None:
     )
     assert (installed / "LICENSE").is_file()
 
+    # The map ships inside the skill, so an installed copy can open it.
+    assert (installed / "map" / "scripts" / "open_map.py").is_file()
+    assert (installed / "map" / "assets" / "index.html").is_file()
+
     for excluded in ("tests", "tools", "docs", ".github", "pyproject.toml", "README.md"):
         assert not (installed / excluded).exists(), excluded
     assert not list(installed.rglob("__pycache__"))
