@@ -314,7 +314,9 @@ table.run tbody tr:hover { background: transparent; }
 .mark.planned { color: var(--dim); }
 .task-name .badge { margin-left: auto; font-size: 9.5px; font-family: var(--mono); padding: 0.05rem 0.4rem; }
 
-/* Dropdowns: inline in the sidebar, a popover in the top bar. */
+/* Dropdowns: a button that floats a panel of cards over the page. The panel is
+   fixed-positioned under its button by script, so the sidebar's scroll area
+   cannot clip it, and opening it moves nothing else on the page. */
 .dropdown { position: relative; min-width: 0; }
 .dropdown-button {
   display: flex; align-items: center; gap: 0.5rem; width: 100%; text-align: left; cursor: pointer;
@@ -326,15 +328,20 @@ table.run tbody tr:hover { background: transparent; }
 .dropdown-summary { flex: 1; min-width: 0; display: grid; gap: 0.2rem; }
 .caret { flex: none; color: var(--dim); transition: transform 160ms ease; }
 .dropdown.open > .dropdown-button .caret { transform: rotate(180deg); }
-.dropdown-panel { display: grid; gap: 0.4rem; margin-top: 0.4rem; }
-.dropdown-panel .note { padding: 0.2rem 0.1rem; }
-.dropdown.popover .dropdown-button { padding: 0.3rem 0.6rem; max-width: 280px; background: var(--surface); }
-.dropdown.popover .dropdown-panel {
-  position: absolute; top: calc(100% + 6px); left: 0; z-index: 70; width: 320px; max-width: calc(100vw - 32px);
-  max-height: 60vh; overflow-y: auto; padding: 0.5rem; margin: 0; background: var(--side);
-  border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
-  font: 11px var(--mono); color: var(--text-2);
+.dropdown-panel {
+  position: fixed; top: 0; left: 0; z-index: 70; display: grid; gap: 0.4rem; align-content: start;
+  width: 300px; max-height: 60vh; overflow-y: auto; padding: 0.5rem; background: var(--side);
+  border: 1px solid var(--border); border-radius: 10px; font: 11px var(--mono); color: var(--text-2);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 77, 141, 0.08);
+  transform-origin: top center; opacity: 0; visibility: hidden; transform: translateY(-6px) scale(0.97);
+  transition: opacity 140ms ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear 160ms;
 }
+.dropdown.open > .dropdown-panel {
+  opacity: 1; visibility: visible; transform: none;
+  transition: opacity 140ms ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1), visibility 0s;
+}
+.dropdown-panel .note { padding: 0.2rem 0.1rem; }
+.project-slot .dropdown-button { padding: 0.3rem 0.6rem; max-width: 280px; }
 .pick-card {
   display: grid; gap: 0.25rem; padding: 0.5rem 0.6rem; border: 1px solid var(--line); border-radius: 8px;
   background: var(--surface); color: var(--text-2); font: 11px var(--mono);
@@ -349,9 +356,7 @@ a.pick-card:hover { text-decoration: none; border-color: rgba(255, 255, 255, 0.2
 .project-slot { min-width: 0; }
 @media (max-width: 720px) {
   .project-slot .dropdown-button .pick-meta, .project-slot .dropdown-button .pick-bar { display: none; }
-  .dropdown.popover .dropdown-button { max-width: 140px; }
-  /* Pinned under the top bar, so it never runs off a narrow screen. */
-  .dropdown.popover .dropdown-panel { position: fixed; top: 60px; left: 16px; right: 16px; width: auto; max-width: none; }
+  .project-slot .dropdown-button { max-width: 140px; }
 }
 
 .legend { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.35rem; }
@@ -512,7 +517,7 @@ path.edge.dashed { animation: flow-dashed 2.1s linear infinite; }
 #help b { color: var(--text); font-weight: 400; display: inline-block; width: 92px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .shell, .collapse, .stage.animate .canvas, .node, .caret { transition: none; }
+  .shell, .collapse, .stage.animate .canvas, .node, .caret, .dropdown-panel, .dropdown.open > .dropdown-panel { transition: none; }
   path.edge.flow, .particle { display: none; }
   path.edge.dashed, .progress-fill::after, .progress-finish::after, .node.current .bar { animation: none; }
   .progress-fill, .progress-runner { transition: none; }
@@ -732,7 +737,7 @@ function renderNav() {
     return `<a href="${esc(target)}" class="${route.page === page ? "active" : ""}">${label}</a>`;
   }).join("");
   // The map carries the project picker in its sidebar; every other view in the top bar.
-  el("project-slot").innerHTML = state && route.page !== "map" ? projectPicker("project-top", true) : "";
+  el("project-slot").innerHTML = state && route.page !== "map" ? projectPicker("project-top") : "";
 }
 
 /* ---------------- projects and planned tasks ---------------- */
@@ -775,7 +780,7 @@ function projectCard(project, on, asLink) {
     </${tag}>`;
 }
 
-function projectPicker(key, popover) {
+function projectPicker(key) {
   const current = currentProject();
   let body = projects.map((project) => projectCard(project, project.slug === current.slug, true)).join("");
   if (projects.length <= 1) {
@@ -783,7 +788,7 @@ function projectPicker(key, popover) {
       ? "A snapshot holds one project."
       : "Only one project found. Every <code>.factory</code> folder next to this repository is listed as a project."}</div>`;
   }
-  return dropdown(key, projectCard(current, false, false), body, false, popover);
+  return dropdown(key, projectCard(current, false, false), body);
 }
 
 // Whether a task is done, has started (it has a run directory), or is only planned.
@@ -820,44 +825,60 @@ function tasksDropdown() {
     : `<div class="note">${state.factory.present
       ? "Nothing planned yet. Tasks come from <code>backlog.json</code> and from run directories under <code>.factory/tasks/</code>."
       : "No factory directory, so no run is in progress. Every status on the map is build status derived from the repository."}</div>`;
-  return dropdown("tasks", summary, body, true, false);
+  return dropdown("tasks", summary, body);
 }
 
-function dropdown(key, summary, body, openByDefault, popover) {
-  const open = dropdownOpen(key, openByDefault, popover);
-  return `<div class="dropdown${popover ? " popover" : ""}${open ? " open" : ""}" data-dropdown="${esc(key)}">
+// A dropdown starts closed; one left open stays open across a poll's redraw.
+function dropdown(key, summary, body) {
+  const open = Boolean(ui.dropdowns[key]);
+  return `<div class="dropdown${open ? " open" : ""}" data-dropdown="${esc(key)}">
       <button type="button" class="dropdown-button" aria-expanded="${open}" aria-controls="dropdown-${esc(key)}">
         <span class="dropdown-summary">${summary}</span><span class="caret" aria-hidden="true">▾</span>
       </button>
-      <div class="dropdown-panel" id="dropdown-${esc(key)}"${open ? "" : " hidden"}>${body}</div>
+      <div class="dropdown-panel" id="dropdown-${esc(key)}" role="region">${body}</div>
     </div>`;
 }
 
-// A sidebar dropdown remembers whether it was open; a popover always starts closed.
-function dropdownOpen(key, openByDefault, popover) {
-  if (ui.dropdowns[key] !== undefined) return ui.dropdowns[key];
-  if (popover) return false;
-  const saved = storageGet("factory-map-dropdown-" + key);
-  return saved === null ? openByDefault : saved === "open";
+// Float a panel under its button: at least 300px wide, inside a 16px gutter,
+// and no taller than the room left below the button.
+function placePanel(box) {
+  const panel = box.querySelector(".dropdown-panel");
+  const rect = box.querySelector(".dropdown-button").getBoundingClientRect();
+  const gutter = 16;
+  const width = Math.min(Math.max(rect.width, 300), window.innerWidth - gutter * 2);
+  panel.style.width = width + "px";
+  panel.style.left = Math.min(Math.max(rect.left, gutter), window.innerWidth - gutter - width) + "px";
+  panel.style.top = rect.bottom + 6 + "px";
+  panel.style.maxHeight = Math.max(160, window.innerHeight - rect.bottom - 6 - gutter) + "px";
+}
+
+function placeOpenPanels() {
+  document.querySelectorAll(".dropdown.open").forEach(placePanel);
 }
 
 function setDropdown(box, open) {
+  if (open) {
+    closePopovers(box);
+    placePanel(box);
+  }
   box.classList.toggle("open", open);
   box.querySelector(".dropdown-button").setAttribute("aria-expanded", String(open));
-  box.querySelector(".dropdown-panel").hidden = !open;
   ui.dropdowns[box.dataset.dropdown] = open;
-  if (!box.classList.contains("popover")) storageSet("factory-map-dropdown-" + box.dataset.dropdown, open ? "open" : "closed");
 }
 
 function wireDropdowns() {
   document.querySelectorAll("[data-dropdown]").forEach((box) => {
     box.querySelector(".dropdown-button").addEventListener("click", () => setDropdown(box, !box.classList.contains("open")));
   });
+  // A panel floats in the window, so it follows its button when the sidebar scrolls.
+  document.querySelectorAll(".side-body").forEach((body) => body.addEventListener("scroll", placeOpenPanels));
+  placeOpenPanels();
 }
 
+// Close every open dropdown except the one holding `except`; report whether any closed.
 function closePopovers(except) {
   let closed = false;
-  document.querySelectorAll(".dropdown.popover.open").forEach((box) => {
+  document.querySelectorAll(".dropdown.open").forEach((box) => {
     if (except && box.contains(except)) return;
     setDropdown(box, false);
     closed = true;
@@ -998,7 +1019,7 @@ function sidebar() {
   const counts = { done: 0, progress: 0, planned: 0 };
   state.task_index.forEach((entry) => { counts[taskStatus(entry).key] += 1; });
   let html = `<span class="side-label">Project${projects.length > 1 ? ` · ${projects.length} found` : ""}</span>`;
-  html += projectPicker("project-side", false);
+  html += projectPicker("project-side");
   html += `<span class="side-label">Planned tasks${state.task_index.length
     ? ` · ${counts.done} done · ${counts.progress} in progress · ${counts.planned} not started` : ""}</span>`;
   html += tasksDropdown();
@@ -1862,7 +1883,10 @@ function setupKeys() {
   });
   el("help").addEventListener("click", () => toggleHelp(false));
   document.addEventListener("click", (event) => closePopovers(event.target));
-  window.addEventListener("resize", () => { if (el("stage") && ui.fitted) fit(false); });
+  window.addEventListener("resize", () => {
+    placeOpenPanels();
+    if (el("stage") && ui.fitted) fit(false);
+  });
   if (SNAPSHOT) {
     window.addEventListener("hashchange", () => {
       route = parseRoute(locationRoute());

@@ -249,10 +249,11 @@ marker on every view.
 | One stage | purpose, run evidence, failure and escalation conditions, artifact, build, entry and exit gates |
 | Repository | tabs for skills, scripts, schemas, artifacts, gates, standards, out of scope and warnings |
 
-Off the map, the project picker sits in the top bar as a popover; Esc or a
-click outside closes it, and switching project from a task page lands on the
-other project's task list. Both sidebar dropdowns remember whether they were
-open.
+Every dropdown floats its panel of cards over the page rather than pushing
+content down: it fades and scales in under its button, only one is open at a
+time, and Esc or a click outside closes it. Off the map, the project picker
+sits in the top bar, and switching project from a task page lands on the other
+project's task list.
 
 On the map:
 
