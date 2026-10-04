@@ -214,6 +214,130 @@ def test_a_page_route_naming_an_unknown_stage_or_task_is_a_404(server: dict) -> 
         assert json.loads(body)["error_code"] == "NOT_FOUND"
 
 
+def make_sibling_projects(root: Path) -> Path:
+    """A projects folder: two factories, a folder without one, and a stray file."""
+    siblings = root / "siblings"
+    alpha = siblings / "Alpha Shop" / ".factory"
+    (alpha / "tasks" / "TASK-A-1").mkdir(parents=True)
+    (alpha / "project.json").write_text(
+        json.dumps({"project_id": "ALPHA", "project_name": "Alpha Shop"}), encoding="utf-8"
+    )
+    (siblings / "beta" / ".factory" / "tasks" / "TASK-B-1").mkdir(parents=True)
+    (siblings / "no-factory").mkdir()
+    (siblings / "notes.txt").write_text("not a project", encoding="utf-8")
+    return siblings
+
+
+@pytest.fixture
+def projects_server(factory_run: Callable, tmp_path: Path) -> Iterator[dict[str, Any]]:
+    """A running server with a default factory and two sibling projects."""
+    factory = factory_run()
+    siblings = make_sibling_projects(tmp_path)
+    instance = serve_map.make_server(ROOT, factory, 0, siblings)
+    thread = threading.Thread(target=instance.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield {
+            "url": f"http://127.0.0.1:{instance.server_address[1]}",
+            "factory": factory,
+            "siblings": siblings,
+        }
+    finally:
+        instance.shutdown()
+        instance.server_close()
+        thread.join(timeout=5)
+
+
+def test_projects_are_the_default_factory_then_each_sibling_factory(
+    factory_run: Callable, tmp_path: Path
+) -> None:
+    factory = factory_run()
+    siblings = make_sibling_projects(tmp_path)
+
+    projects = serve_map.discover_projects(factory, siblings)
+
+    assert [p.factory for p in projects] == [
+        factory,
+        siblings / "Alpha Shop" / ".factory",
+        siblings / "beta" / ".factory",
+    ]
+    assert [p.is_default for p in projects] == [True, False, False]
+    assert projects[1].slug == "alpha-shop"
+
+
+def test_a_factory_found_twice_is_listed_once(factory_run: Callable, tmp_path: Path) -> None:
+    factory = factory_run()
+
+    projects = serve_map.discover_projects(factory, tmp_path.parent)
+
+    assert sum(1 for p in projects if p.factory.resolve() == factory.resolve()) == 1
+
+
+def test_colliding_folder_names_get_distinct_slugs() -> None:
+    taken: set[str] = set()
+    first = serve_map.slug_for("Alpha Shop", taken)
+    taken.add(first)
+
+    assert first == "alpha-shop"
+    assert serve_map.slug_for("alpha_shop", taken) == "alpha-shop-2"
+    assert serve_map.slug_for("...", set()) == "project"
+
+
+def test_without_a_projects_dir_only_the_default_factory_is_listed(server: dict) -> None:
+    status, body, _ = get(server["url"] + "/api/projects")
+    projects = json.loads(body)["projects"]
+
+    assert status == 200
+    assert len(projects) == 1
+    assert projects[0]["default"] is True
+    assert projects[0]["name"] == "Demo Project"
+
+
+def test_the_projects_route_summarizes_every_project(projects_server: dict) -> None:
+    status, body, _ = get(projects_server["url"] + "/api/projects")
+    projects = {p["slug"]: p for p in json.loads(body)["projects"]}
+
+    assert status == 200
+    assert projects["alpha-shop"]["name"] == "Alpha Shop"
+    assert projects["alpha-shop"]["project_id"] == "ALPHA"
+    assert projects["alpha-shop"]["tasks_total"] == 1
+    assert projects["beta"]["name"] == "beta"
+    assert projects["beta"]["project_id"] is None
+    assert [p["default"] for p in projects.values()].count(True) == 1
+
+
+def test_a_project_slug_chooses_which_factory_the_state_reads(projects_server: dict) -> None:
+    status, body, _ = get(projects_server["url"] + "/api/state?project=beta")
+    state = json.loads(body)
+
+    assert status == 200
+    assert state["tasks"] == ["TASK-B-1"]
+    assert state["factory"]["path"].endswith("beta/.factory")
+
+
+def test_a_task_page_is_checked_inside_the_chosen_project(projects_server: dict) -> None:
+    url = projects_server["url"]
+
+    assert get(url + "/tasks/TASK-B-1?project=beta")[0] == 200
+    assert get(url + "/tasks/TASK-B-1")[0] == 404
+    assert get(url + "/tasks/TASK-DEMO-010?project=beta")[0] == 404
+    assert get(url + "/tasks/TASK-DEMO-010")[0] == 200
+
+
+def test_an_unknown_or_hostile_project_slug_is_a_404(projects_server: dict) -> None:
+    for query in ("nope", "..", "../beta", "beta/.factory", "no-factory", "%2e%2e"):
+        for route in ("/", "/api/state", "/api/skill/plan-change"):
+            status, _, _ = get(f"{projects_server['url']}{route}?project={query}")
+            assert status == 404, (route, query)
+
+
+def test_a_blank_project_slug_means_the_default_project(projects_server: dict) -> None:
+    status, body, _ = get(projects_server["url"] + "/api/state?project=")
+
+    assert status == 200
+    assert json.loads(body)["tasks"] == ["TASK-DEMO-010"]
+
+
 def test_serving_writes_nothing_to_the_repository_or_the_factory(server: dict) -> None:
     def listing(root: Path) -> dict[str, float]:
         return {
