@@ -297,7 +297,8 @@ python tools/factory-map/scripts/serve_map.py --open --factory path/to/project/.
 
 The first command shows how complete each stage's implementation is. The second
 shows where each task in that project has got to, and every status names the
-file and field it came from. The map writes nothing and runs nothing.
+file and field it came from. The map writes nothing and runs nothing. Besides the
+map it has pages for tasks, single tasks, stages and the repository inventory.
 
 ---
 

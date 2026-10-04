@@ -26,6 +26,7 @@ no pipeline stage.
 | `--port N` | Port on 127.0.0.1. Default 8787. `--port 0` picks a free one. |
 | `--repo PATH` | Repository root. Default the working directory. |
 | `--factory PATH` | Run-state directory. Default `<repo>/.factory`. |
+| `--projects-dir PATH` | Folder whose subfolders' `.factory` directories are listed as projects. Default the folder containing `--repo`. |
 | `--open` | Open the map in a browser once the server is up. |
 | `--once --out FILE` | Write a self-contained HTML snapshot instead of serving. |
 
@@ -33,17 +34,43 @@ A snapshot inlines the state into the page, so it opens from the filesystem
 with no server and no network. It is a photograph rather than a live view, and
 the header says so.
 
-Three routes exist and everything else is a 404:
+These routes exist and everything else is a 404:
 
 | Route | Serves |
 | --- | --- |
-| `/` | the page |
+| `/` | the page, showing the map |
+| `/tasks`, `/tasks/<task id>` | the page, showing every task or one task |
+| `/stages`, `/stages/<name>` | the page, showing every stage or one stage |
+| `/repository` | the page, showing the repository inventory |
+| `/api/projects` | every project the server found, with its name, ID and how many tasks are done |
 | `/api/state` | the whole state as JSON, with the fingerprint as an `ETag` |
 | `/api/skill/<name>` | one stage, where `<name>` is checked against the known stage list |
 
-The name in `/api/skill/<name>` is compared against the seventeen known stages
-and is never used to build a filesystem path, so there is nothing for a
-traversal attempt to reach.
+Every page route serves the same file; the page draws the view the address
+names. A stage `<name>` is compared against the known stages and a `<task id>`
+against the task directories already in the factory, so an unknown one is a
+404. Neither is ever used to build a filesystem path, so there is nothing for a
+traversal attempt to reach. `?task=<task id>` on any page chooses the task whose
+run it shows, as it does on `/api/state`.
+
+## Projects
+
+A project is a factory directory. The server always shows `--factory`, and
+lists beside it every `<folder>/.factory` one level under `--projects-dir`, so
+each repository the factory has run in becomes a project. Folders without a
+`.factory` are skipped, and the scan never goes deeper. The scan runs on every
+request, so a project appears as soon as its `.factory` does.
+
+Each project gets a slug from its folder name, such as `cattle-crm` for
+`Cattle CRM/.factory`, made unique with a number when two folders collide.
+`?project=<slug>` on `/api/state`, `/api/skill/<name>` and every page route
+chooses which factory they read; without it, or with it blank, they read
+`--factory`. The slug is looked up in the server's own list, so an unknown one
+is a 404 and a request can never name a directory. A task ID in `/tasks/<task id>`
+is checked inside the chosen project.
+
+The project's name and ID come from its `project.json`, falling back to the
+folder name. A snapshot holds one project.
 
 `scripts/build_state.py` does the scanning and can be run on its own:
 
@@ -114,8 +141,8 @@ at all, and the map says so rather than counting the file.
 
 ## Which Field Decides What
 
-Every status traces to a file and a field, shown in the detail panel and in the
-Checkpoints view. These are the fields the schemas actually declare.
+Every status traces to a file and a field, shown on each stage's page and on
+the Repository page's Gates tab. These are the fields the schemas actually declare.
 
 | Stage | Artifact | Decided by |
 | --- | --- | --- |
@@ -170,19 +197,24 @@ somewhere else.
 
 Three stages have no documented artifact filename anywhere in the repository:
 `review-pull-request`, `revise-pull-request` and `completion-report`. The map
-uses `review.json`, `revision.json` and `completion.json`, and the Artifacts
-view labels those rows `factory-map` rather than `repository` so the difference
+uses `review.json`, `revision.json` and `completion.json`, and the Repository
+page's Artifacts tab labels those rows `factory-map` rather than `repository` so the difference
 stays visible.
 
 ## The Task List
 
-The side menu lists every task the backlog plans and every task a run has
-started, so planned work shows beside finished work. Each task carries a mark:
+The map's Planned tasks dropdown and the Tasks page list every task the backlog
+plans and every task a run has started, so planned work shows beside finished
+work. Each task carries a mark and a status:
 
-| Mark | Means |
-| --- | --- |
-| green ✓ | done: its completion report has `status` `complete` and no `inconsistencies` |
-| red ✗ | not done: planned in `backlog.json` with no run yet, or started without a complete report |
+| Mark | Status | Means |
+| --- | --- | --- |
+| green ✓ | done | its completion report has `status` `complete` and no `inconsistencies` |
+| blue ● | in progress | it has a run directory under `<factory>/tasks/` but no complete report |
+| grey ○ | not started | planned in `backlog.json` with no run directory yet |
+
+A task with no title was started directly rather than planned in the backlog,
+and its card says so.
 
 The list is `task_index` in the state. It is the union of `backlog.json`
 `tasks[].task_id`, with each title, and the directories under
@@ -204,21 +236,63 @@ absolute URL in the file is the SVG namespace, which is an identifier and is
 never requested. The graph is drawn as inline SVG paths; the cards are HTML,
 because SVG cannot wrap a line of text.
 
+The file draws several views, and its look and layout follow the ProjectPlanner
+web UI. A top bar carries the navigation, a live indicator, and a read-only
+marker on every view.
+
+| View | Shows |
+| --- | --- |
+| Map | the pipeline graph, with a sidebar holding the Project and Planned tasks dropdowns, the run, view links and a legend |
+| Tasks | counts, the completion bar, and every task with a filter by ID, title or status |
+| One task | a stage stepper, the seven gate cards, every stage's artifact and evidence, and code quality findings |
+| Stages | the pipeline lane by lane, each stage with its build status, artifact, script, schema and exit gate |
+| One stage | purpose, run evidence, failure and escalation conditions, artifact, build, entry and exit gates |
+| Repository | tabs for skills, scripts, schemas, artifacts, gates, standards, out of scope and warnings |
+
+Every dropdown floats its panel of cards over the page rather than pushing
+content down: it fades and scales in under its button, only one is open at a
+time, and Esc or a click outside closes it. Off the map, the project picker
+sits in the top bar, and switching project from a task page lands on the other
+project's task list.
+
+On the map:
+
 | Interaction | Effect |
 | --- | --- |
-| click a node | detail panel: description, purpose, artifact, evidence, failure and escalation conditions |
-| hover a node | dim everything else, keep its edges lit |
+| click a stage card | open that stage's page |
+| Project dropdown | cards for every project; choosing one reloads every view for it |
+| Planned tasks dropdown | cards for every task, marked done, in progress or not started |
+| click a task card | show that task's run on the map |
+| hover a stage card | dim everything else, keep its lines lit |
 | drag | pan |
-| scroll | zoom, with a zoom-to-fit control |
-| `/` | filter nodes by name or description |
-| Esc | close the task list, the panel, the filter, or the shortcut list |
+| scroll | zoom around the cursor |
+| double-click, or Fit | fit the whole map |
+| arrows, `+`, `-`, `0` | pan, zoom and fit, when the map has keyboard focus |
+| `/` | filter stages by name or description; on other views, focus the table filter |
+| Esc | close the filter or the shortcut list |
 | `?` | the shortcut list |
-| click a side-menu row | focus the matching node on the canvas |
-| open the task list | choose a task; ↑ and ↓ move between tasks |
+| ‹ in the sidebar | collapse the sidebar to a rail; the browser remembers the choice |
 
 The page polls `/api/state` every three seconds with the previous `ETag`. An
 unchanged repository answers `304` and nothing re-renders. The LIVE indicator
-carries the time of the last change it saw.
+carries the time of the last change it saw. A redraw keeps the map's position,
+table filters, and which gate cards are open.
+
+A snapshot opens from the filesystem, where there is no server to answer
+`/tasks` or `/stages`, so its links use hash routes such as `#/stages/plan-change`
+instead. It holds one task's run, and a task page for any other task says so.
 
 State is never signalled by colour alone. A blocked card takes a rose border
 and its tag chip changes text, so the state survives being read without colour.
+
+The header carries a project completion bar: done tasks over every task in the
+task list, as a count and a percentage. It fills toward a chequered flag as
+tasks get done, and turns green when every task is done. It is hidden when the
+task list is empty.
+
+Every stage line shows its direction as dashes moving from the source stage to
+the target. That motion is decoration, not state: every line moves the same way
+whatever its run status. During a run, a glowing particle also travels each
+line the run has already taken: its source stage `passed` and its target has
+started. When the browser asks for reduced motion, the lines and the bar stay
+still and the particles are hidden.
