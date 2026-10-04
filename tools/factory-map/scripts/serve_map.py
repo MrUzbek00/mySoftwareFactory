@@ -2,8 +2,13 @@
 
 The server binds the loopback interface explicitly and never anything else. It
 reads the repository and the factory directory, and writes nothing to either.
-It runs no subprocess and executes no pipeline stage. There are three routes
-and everything else is a 404.
+It runs no subprocess and executes no pipeline stage. It answers the page at
+a fixed set of page routes, the state at /api/state and one stage at
+/api/skill/<name>; everything else is a 404.
+
+The page draws every view in the browser, so each page route serves the same
+file. A route that names a stage or a task is answered only when that name is
+already known, and the name is compared, never used to build a path.
 
 State is rebuilt on request rather than cached, so the page always reflects the
 files as they are now. The fingerprint is served as an ETag so that a client
@@ -29,6 +34,7 @@ from build_state import (  # noqa: E402
     STAGE_IDS,
     ScriptError,
     build_state,
+    discover_tasks,
     emit,
     resolve_directory,
 )
@@ -36,6 +42,9 @@ from build_state import (  # noqa: E402
 ASSET = Path(__file__).resolve().parent.parent / "assets" / "index.html"
 BOOTSTRAP = '<script id="bootstrap-state" type="application/json">null</script>'
 HOST = "127.0.0.1"
+# Pages that take no parameter. /stages/<name> and /tasks/<task id> are the
+# other two page routes, checked in is_page_route.
+FIXED_PAGE_ROUTES = frozenset({"/", "/tasks", "/stages", "/repository"})
 
 
 def read_page() -> str:
@@ -60,8 +69,27 @@ def skill_detail(state: dict[str, Any], name: str) -> dict[str, Any] | None:
     return None
 
 
+def is_page_route(route: str, factory: Path) -> bool:
+    """Whether the page answers at this route.
+
+    `route` is the request path with any trailing slash removed. A stage name
+    must be one of the known stages and a task ID one of the task directories
+    already in the factory, so an unknown name is a 404 like any other route.
+    """
+    if route in FIXED_PAGE_ROUTES:
+        return True
+    section, _, name = route.lstrip("/").partition("/")
+    if not name or "/" in name:
+        return False
+    if section == "stages":
+        return name in STAGE_IDS
+    if section == "tasks":
+        return name in discover_tasks(factory)
+    return False
+
+
 class MapHandler(BaseHTTPRequestHandler):
-    """Three routes, no filesystem path ever taken from the request."""
+    """Page routes and two API routes; no filesystem path is taken from the request."""
 
     server_version = "factory-map"
     repo: Path
@@ -92,7 +120,7 @@ class MapHandler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         route = parsed.path.rstrip("/") or "/"
 
-        if route == "/":
+        if is_page_route(route, self.factory):
             self.respond(200, read_page().encode("utf-8"), "text/html; charset=utf-8")
             return
 

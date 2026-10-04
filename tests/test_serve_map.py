@@ -1,4 +1,4 @@
-"""The server is read-only, loopback-only, and has exactly three routes.
+"""The server is read-only, loopback-only, and answers a fixed set of routes.
 
 These tests start the real server on an ephemeral port and speak HTTP to it,
 rather than calling the handler directly, so the binding and the status codes
@@ -177,6 +177,43 @@ def test_any_other_route_is_a_404(server: dict) -> None:
     assert json.loads(body)["error_code"] == "NOT_FOUND"
 
 
+PAGE_ROUTES = (
+    "/",
+    "/tasks",
+    "/tasks/",
+    "/tasks/TASK-DEMO-010",
+    "/stages",
+    "/stages/validate-change",
+    "/repository",
+    "/?task=TASK-DEMO-010",
+    "/stages/plan-change?task=TASK-DEMO-010",
+)
+
+
+@pytest.mark.parametrize("route", PAGE_ROUTES)
+def test_every_page_route_serves_the_page(server: dict, route: str) -> None:
+    status, body, headers = get(server["url"] + route)
+
+    assert status == 200, route
+    assert headers["Content-Type"].startswith("text/html")
+    assert b"bootstrap-state" in body
+
+
+def test_a_page_route_naming_an_unknown_stage_or_task_is_a_404(server: dict) -> None:
+    for path in (
+        "/stages/nope",
+        "/stages/validate-change/extra",
+        "/stages/..%2f..%2fAGENTS.md",
+        "/tasks/TASK-NOPE",
+        "/tasks/..",
+        "/tasks/TASK-DEMO-010/context.json",
+        "/repository/skills",
+    ):
+        status, body, _ = get(server["url"] + path)
+        assert status == 404, path
+        assert json.loads(body)["error_code"] == "NOT_FOUND"
+
+
 def test_serving_writes_nothing_to_the_repository_or_the_factory(server: dict) -> None:
     def listing(root: Path) -> dict[str, float]:
         return {
@@ -189,6 +226,8 @@ def test_serving_writes_nothing_to_the_repository_or_the_factory(server: dict) -
     get(server["url"] + "/")
     get(server["url"] + "/api/state")
     get(server["url"] + "/api/skill/plan-change")
+    for route in PAGE_ROUTES:
+        get(server["url"] + route)
 
     assert listing(server["factory"]) == before
 
