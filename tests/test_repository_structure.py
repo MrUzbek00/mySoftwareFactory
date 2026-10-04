@@ -73,10 +73,11 @@ REQUIRED_PATHS = [
     "my-software-factory/schemas/completion-report.schema.json",
     "my-software-factory/schemas/factory-map-state.schema.json",
     "my-software-factory/standards/backend-code-quality.md",
-    "tools/factory-map/README.md",
-    "tools/factory-map/assets/index.html",
-    "tools/factory-map/scripts/build_state.py",
-    "tools/factory-map/scripts/serve_map.py",
+    "my-software-factory/map/README.md",
+    "my-software-factory/map/assets/index.html",
+    "my-software-factory/map/scripts/build_state.py",
+    "my-software-factory/map/scripts/serve_map.py",
+    "my-software-factory/map/scripts/open_map.py",
     "docs/pipeline.md",
     "docs/architecture.md",
     "docs/schemas.md",
@@ -92,6 +93,7 @@ REQUIRED_PATHS = [
     "tests/test_quality_review.py",
     "tests/test_build_state.py",
     "tests/test_serve_map.py",
+    "tests/test_open_map.py",
     "tests/test_install_skill.py",
 ]
 

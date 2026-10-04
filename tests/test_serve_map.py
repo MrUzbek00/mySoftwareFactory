@@ -20,7 +20,8 @@ from typing import Any
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "tools" / "factory-map" / "scripts" / "serve_map.py"
+SCRIPT = ROOT / "my-software-factory" / "map" / "scripts" / "serve_map.py"
+PAGE = ROOT / "my-software-factory" / "map" / "assets" / "index.html"
 
 
 def load_module():
@@ -77,7 +78,7 @@ def test_the_root_route_serves_the_page(server: dict) -> None:
 
 def test_the_page_loads_nothing_from_the_network() -> None:
     """Everything is inline, so the page renders with no network at all."""
-    page = (ROOT / "tools" / "factory-map" / "assets" / "index.html").read_text(encoding="utf-8")
+    page = PAGE.read_text(encoding="utf-8")
 
     for marker in ("<link", "@import", "<script src", "url(http", "//cdn", "googleapis"):
         assert marker not in page, marker
@@ -94,7 +95,7 @@ UNFORGEABLE_WINDOW_PROPERTIES = ("top", "window", "document", "location")
 
 
 def test_the_page_script_declares_no_global_that_shadows_window() -> None:
-    page = (ROOT / "tools" / "factory-map" / "assets" / "index.html").read_text(encoding="utf-8")
+    page = PAGE.read_text(encoding="utf-8")
     names = "|".join(UNFORGEABLE_WINDOW_PROPERTIES)
     top_level_declaration = re.compile(
         rf"^(?:function|var|let|const|class)\s+({names})\b", re.MULTILINE

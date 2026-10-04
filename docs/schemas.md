@@ -49,7 +49,7 @@ the artifacts it points at belong to the stages that write them.
 
 | Schema | Written by | Read by |
 | --- | --- | --- |
-| `factory-map-state.schema.json` | `tools/factory-map/scripts/build_state.py` | the map page, and `tests/test_build_state.py` |
+| `factory-map-state.schema.json` | `my-software-factory/map/scripts/build_state.py` | the map page, and `tests/test_build_state.py` |
 
 This one is not a pipeline artifact. No stage produces it, `completion-report`
 never validates it, and its presence in `my-software-factory/schemas/` is a convenience rather than

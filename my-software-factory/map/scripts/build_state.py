@@ -253,6 +253,10 @@ INTAKE_STAGE_IDS = frozenset(
 SKILL_ROOT = "my-software-factory"
 SKILL_GLOB = f"{SKILL_ROOT}/stages/*/*/SKILL.md"
 
+# The folder that holds the skill: the repository root in a source checkout, or
+# the skills directory in an installed copy. The map ships at <skill>/map/scripts.
+DEFAULT_REPO = Path(__file__).resolve().parents[3]
+
 
 def stage_directory(stage_id: str) -> str:
     """Return the repository-relative directory that holds one stage."""
@@ -495,7 +499,7 @@ RESOLVED_UNKNOWN_STATES = ("ANSWERED", "DEFERRED")
 RESOLVED_CONFLICT_STATES = ("RESOLVED",)
 
 # How each stage's artifact decides its run status. The field names here are
-# the ones the schemas actually declare; see tools/factory-map/README.md.
+# the ones the schemas actually declare; see my-software-factory/map/README.md.
 RUN_RULES: dict[str, dict[str, Any]] = {
     "ingest-requirements": {"kind": "requirements"},
     "clarify-project": {"kind": "status", "passed": ("confirmed",), "blocked": ("draft",)},
@@ -595,13 +599,18 @@ def scan_skill(repo: Path, stage: dict[str, Any]) -> dict[str, Any]:
     return detail
 
 
-def scan_tests(repo: Path) -> dict[str, list[str]]:
+def scan_tests(repo: Path) -> dict[str, list[str]] | None:
     """Map a script filename to the test modules that exercise it.
+
+    Returns None when there is no tests/ directory, as in an installed copy of
+    the skill: coverage cannot be seen there, which is not the same as absent.
 
     tests/test_repository_structure.py is excluded deliberately. It lists every
     script path to assert the file exists, which is not the same as running it,
     and counting it would report coverage this repository does not have.
     """
+    if not (repo / "tests").is_dir():
+        return None
     coverage: dict[str, list[str]] = {}
     for test_path in sorted((repo / "tests").glob("test_*.py")):
         if test_path.name == "test_repository_structure.py":
@@ -629,7 +638,9 @@ def references_script_path(text: str, script_name: str) -> bool:
     return re.search(pattern, text) is not None
 
 
-def build_status(repo: Path, detail: dict[str, Any], coverage: dict[str, list[str]]) -> dict:
+def build_status(
+    repo: Path, detail: dict[str, Any], coverage: dict[str, list[str]] | None
+) -> dict:
     """Decide how completely one stage is built, and say what is missing."""
     missing: list[str] = []
     if not detail["skill_present"]:
@@ -642,11 +653,12 @@ def build_status(repo: Path, detail: dict[str, Any], coverage: dict[str, list[st
         missing.append("references/*.md")
 
     tests: list[str] = []
-    for script in detail["scripts"]:
-        named = coverage.get(Path(script).name, [])
-        tests.extend(named)
-        if not named:
-            missing.append(f"a test exercising {Path(script).name}")
+    if coverage is not None:
+        for script in detail["scripts"]:
+            named = coverage.get(Path(script).name, [])
+            tests.extend(named)
+            if not named:
+                missing.append(f"a test exercising {Path(script).name}")
 
     schema = detail["own_schema"]
     if schema is not None and not (repo / schema).is_file():
@@ -1198,7 +1210,12 @@ def build_state(repo: Path, factory: Path, task_id: str | None) -> dict[str, Any
         "selected_task": selected,
         "warnings": [
             f"skill directory not placed on the map: {name}" for name in unmapped_skills(repo)
-        ],
+        ]
+        + (
+            ["no tests/ directory beside the skill, so build status does not check test coverage"]
+            if coverage is None
+            else []
+        ),
         "views": {
             "run": {
                 "project_id": project_payload.get("project_id"),
@@ -1244,7 +1261,7 @@ def build_state(repo: Path, factory: Path, task_id: str | None) -> dict[str, Any
 
 
 def scripts_view(
-    repo: Path, details: dict[str, dict[str, Any]], coverage: dict[str, list[str]]
+    repo: Path, details: dict[str, dict[str, Any]], coverage: dict[str, list[str]] | None
 ) -> list[dict[str, Any]]:
     wording = parse_scripts_table(repo)
     rows: list[dict[str, Any]] = []
@@ -1255,7 +1272,7 @@ def scripts_view(
                     "script": script,
                     "stage": stage_id,
                     "enforces": wording.get(script, ""),
-                    "tests": sorted(set(coverage.get(Path(script).name, []))),
+                    "tests": sorted(set((coverage or {}).get(Path(script).name, []))),
                 }
             )
     return rows
@@ -1290,7 +1307,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Scan the repository and any run state, and emit the pipeline map as JSON.",
     )
-    parser.add_argument("--repo", default=".", help="Path to the repository root.")
+    parser.add_argument(
+        "--repo",
+        default=str(DEFAULT_REPO),
+        help="Folder that holds my-software-factory/. Defaults to the one this script ships in.",
+    )
     parser.add_argument(
         "--factory",
         default=None,

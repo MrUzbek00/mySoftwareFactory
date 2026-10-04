@@ -7,6 +7,7 @@ fail here, because the same node is asserted in more than one state.
 
 import importlib.util
 import json
+import shutil
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -14,7 +15,7 @@ from typing import Any
 from jsonschema import Draft202012Validator
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "tools" / "factory-map" / "scripts" / "build_state.py"
+SCRIPT = ROOT / "my-software-factory" / "map" / "scripts" / "build_state.py"
 STATE_SCHEMA = ROOT / "my-software-factory" / "schemas" / "factory-map-state.schema.json"
 
 
@@ -82,6 +83,27 @@ def test_build_status_comes_from_the_files_each_stage_has(tmp_path: Path) -> Non
     review = node(state, "review-pull-request")
     assert review["build"]["status"] == "partial"
     assert review["build"]["missing"] == ["a test exercising fetch_pull_request.py"]
+
+
+def test_an_installed_copy_without_tests_is_not_marked_partial(tmp_path: Path) -> None:
+    # An install is the skill folder alone, with no tests/ beside it.
+    shutil.copytree(
+        ROOT / "my-software-factory",
+        tmp_path / "my-software-factory",
+        ignore=shutil.ignore_patterns("__pycache__"),
+    )
+    state = build_state_module.build_state(tmp_path, tmp_path / ".factory", None)
+
+    review = node(state, "review-pull-request")
+    assert review["build"]["status"] == "built"
+    assert review["build"]["missing"] == []
+    assert any("does not check test coverage" in warning for warning in state["warnings"])
+    # The source checkout, which has tests/, says nothing of the kind.
+    assert not any("test coverage" in warning for warning in state_for(tmp_path)["warnings"])
+
+
+def test_the_map_defaults_to_the_folder_that_holds_the_skill() -> None:
+    assert build_state_module.DEFAULT_REPO == ROOT
 
 
 def test_chips_are_derived_rather_than_assigned(tmp_path: Path) -> None:
