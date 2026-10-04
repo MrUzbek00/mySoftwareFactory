@@ -26,6 +26,7 @@ no pipeline stage.
 | `--port N` | Port on 127.0.0.1. Default 8787. `--port 0` picks a free one. |
 | `--repo PATH` | Repository root. Default the working directory. |
 | `--factory PATH` | Run-state directory. Default `<repo>/.factory`. |
+| `--projects-dir PATH` | Folder whose subfolders' `.factory` directories are listed as projects. Default the folder containing `--repo`. |
 | `--open` | Open the map in a browser once the server is up. |
 | `--once --out FILE` | Write a self-contained HTML snapshot instead of serving. |
 
@@ -41,6 +42,7 @@ These routes exist and everything else is a 404:
 | `/tasks`, `/tasks/<task id>` | the page, showing every task or one task |
 | `/stages`, `/stages/<name>` | the page, showing every stage or one stage |
 | `/repository` | the page, showing the repository inventory |
+| `/api/projects` | every project the server found, with its name, ID and how many tasks are done |
 | `/api/state` | the whole state as JSON, with the fingerprint as an `ETag` |
 | `/api/skill/<name>` | one stage, where `<name>` is checked against the known stage list |
 
@@ -50,6 +52,25 @@ against the task directories already in the factory, so an unknown one is a
 404. Neither is ever used to build a filesystem path, so there is nothing for a
 traversal attempt to reach. `?task=<task id>` on any page chooses the task whose
 run it shows, as it does on `/api/state`.
+
+## Projects
+
+A project is a factory directory. The server always shows `--factory`, and
+lists beside it every `<folder>/.factory` one level under `--projects-dir`, so
+each repository the factory has run in becomes a project. Folders without a
+`.factory` are skipped, and the scan never goes deeper. The scan runs on every
+request, so a project appears as soon as its `.factory` does.
+
+Each project gets a slug from its folder name, such as `cattle-crm` for
+`Cattle CRM/.factory`, made unique with a number when two folders collide.
+`?project=<slug>` on `/api/state`, `/api/skill/<name>` and every page route
+chooses which factory they read; without it, or with it blank, they read
+`--factory`. The slug is looked up in the server's own list, so an unknown one
+is a 404 and a request can never name a directory. A task ID in `/tasks/<task id>`
+is checked inside the chosen project.
+
+The project's name and ID come from its `project.json`, falling back to the
+folder name. A snapshot holds one project.
 
 `scripts/build_state.py` does the scanning and can be run on its own:
 
@@ -182,14 +203,18 @@ stays visible.
 
 ## The Task List
 
-The map's sidebar and the Tasks page list every task the backlog plans and
-every task a run has started, so planned work shows beside finished work. Each
-task carries a mark:
+The map's Planned tasks dropdown and the Tasks page list every task the backlog
+plans and every task a run has started, so planned work shows beside finished
+work. Each task carries a mark and a status:
 
-| Mark | Means |
-| --- | --- |
-| green ✓ | done: its completion report has `status` `complete` and no `inconsistencies` |
-| grey ○ | not done: planned in `backlog.json` with no run yet, or started without a complete report |
+| Mark | Status | Means |
+| --- | --- | --- |
+| green ✓ | done | its completion report has `status` `complete` and no `inconsistencies` |
+| blue ● | in progress | it has a run directory under `<factory>/tasks/` but no complete report |
+| grey ○ | not started | planned in `backlog.json` with no run directory yet |
+
+A task with no title was started directly rather than planned in the backlog,
+and its card says so.
 
 The list is `task_index` in the state. It is the union of `backlog.json`
 `tasks[].task_id`, with each title, and the directories under
@@ -217,18 +242,25 @@ marker on every view.
 
 | View | Shows |
 | --- | --- |
-| Map | the pipeline graph, with a sidebar of tasks, the run, view links and a legend |
+| Map | the pipeline graph, with a sidebar holding the Project and Planned tasks dropdowns, the run, view links and a legend |
 | Tasks | counts, the completion bar, and every task with a filter by ID, title or status |
 | One task | a stage stepper, the seven gate cards, every stage's artifact and evidence, and code quality findings |
 | Stages | the pipeline lane by lane, each stage with its build status, artifact, script, schema and exit gate |
 | One stage | purpose, run evidence, failure and escalation conditions, artifact, build, entry and exit gates |
 | Repository | tabs for skills, scripts, schemas, artifacts, gates, standards, out of scope and warnings |
 
+Off the map, the project picker sits in the top bar as a popover; Esc or a
+click outside closes it, and switching project from a task page lands on the
+other project's task list. Both sidebar dropdowns remember whether they were
+open.
+
 On the map:
 
 | Interaction | Effect |
 | --- | --- |
 | click a stage card | open that stage's page |
+| Project dropdown | cards for every project; choosing one reloads every view for it |
+| Planned tasks dropdown | cards for every task, marked done, in progress or not started |
 | click a task card | show that task's run on the map |
 | hover a stage card | dim everything else, keep its lines lit |
 | drag | pan |
