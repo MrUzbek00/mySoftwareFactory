@@ -266,7 +266,7 @@ main.wide { flex: 1; min-height: 0; padding: 0; }
 .side-body { flex: 1; min-height: 0; overflow-y: auto; padding: 0 0.9rem 1rem; scrollbar-width: none; }
 .side-body::-webkit-scrollbar { display: none; }
 .side-title, .side-label { letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); font-size: 10px; white-space: nowrap; }
-.side-label { display: block; margin: 1.1rem 0 0.4rem; }
+.side-label { display: block; margin: 1.1rem 0 0.4rem; white-space: normal; line-height: 1.5; }
 .collapse {
   flex: none; width: 26px; height: 26px; border-radius: 6px; border: 1px solid var(--line);
   background: transparent; color: var(--text-2); font: 14px/1 var(--mono); cursor: pointer;
@@ -310,7 +310,49 @@ table.run tbody tr:hover { background: transparent; }
 .task-steps i.current { background: var(--accent); }
 .mark { flex: none; width: 12px; font: 700 12px/1 var(--sans); text-align: center; }
 .mark.done { color: var(--done); }
-.mark.open { color: var(--dim); }
+.mark.started { color: var(--accent); }
+.mark.planned { color: var(--dim); }
+.task-name .badge { margin-left: auto; font-size: 9.5px; font-family: var(--mono); padding: 0.05rem 0.4rem; }
+
+/* Dropdowns: inline in the sidebar, a popover in the top bar. */
+.dropdown { position: relative; min-width: 0; }
+.dropdown-button {
+  display: flex; align-items: center; gap: 0.5rem; width: 100%; text-align: left; cursor: pointer;
+  background: var(--surface); color: var(--text-2); border: 1px solid var(--line); border-radius: 8px;
+  padding: 0.5rem 0.6rem; font: 11px var(--mono);
+}
+.dropdown-button:hover, .dropdown-button:focus-visible { border-color: rgba(255, 255, 255, 0.22); outline: none; }
+.dropdown.open > .dropdown-button { border-color: rgba(255, 77, 141, 0.55); }
+.dropdown-summary { flex: 1; min-width: 0; display: grid; gap: 0.2rem; }
+.caret { flex: none; color: var(--dim); transition: transform 160ms ease; }
+.dropdown.open > .dropdown-button .caret { transform: rotate(180deg); }
+.dropdown-panel { display: grid; gap: 0.4rem; margin-top: 0.4rem; }
+.dropdown-panel .note { padding: 0.2rem 0.1rem; }
+.dropdown.popover .dropdown-button { padding: 0.3rem 0.6rem; max-width: 280px; background: var(--surface); }
+.dropdown.popover .dropdown-panel {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 70; width: 320px; max-width: calc(100vw - 32px);
+  max-height: 60vh; overflow-y: auto; padding: 0.5rem; margin: 0; background: var(--side);
+  border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  font: 11px var(--mono); color: var(--text-2);
+}
+.pick-card {
+  display: grid; gap: 0.25rem; padding: 0.5rem 0.6rem; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--surface); color: var(--text-2); font: 11px var(--mono);
+}
+a.pick-card:hover { text-decoration: none; border-color: rgba(255, 255, 255, 0.22); }
+.pick-card.on { border-color: rgba(255, 77, 141, 0.55); }
+.dropdown-summary .pick-card, .dropdown-summary .task-card { padding: 0; border: none; background: none; }
+.pick-name { color: var(--text); font: 600 12.5px var(--sans); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pick-meta { font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pick-bar { display: block; height: 4px; border-radius: 2px; background: #2a2f3b; overflow: hidden; }
+.pick-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--brand), var(--good)); }
+.project-slot { min-width: 0; }
+@media (max-width: 720px) {
+  .project-slot .dropdown-button .pick-meta, .project-slot .dropdown-button .pick-bar { display: none; }
+  .dropdown.popover .dropdown-button { max-width: 140px; }
+  /* Pinned under the top bar, so it never runs off a narrow screen. */
+  .dropdown.popover .dropdown-panel { position: fixed; top: 60px; left: 16px; right: 16px; width: auto; max-width: none; }
+}
 
 .legend { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.35rem; }
 .legend li { display: flex; align-items: center; gap: 0.5rem; }
@@ -470,7 +512,7 @@ path.edge.dashed { animation: flow-dashed 2.1s linear infinite; }
 #help b { color: var(--text); font-weight: 400; display: inline-block; width: 92px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .shell, .collapse, .stage.animate .canvas, .node { transition: none; }
+  .shell, .collapse, .stage.animate .canvas, .node, .caret { transition: none; }
   path.edge.flow, .particle { display: none; }
   path.edge.dashed, .progress-fill::after, .progress-finish::after, .node.current .bar { animation: none; }
   .progress-fill, .progress-runner { transition: none; }
@@ -483,6 +525,7 @@ path.edge.dashed { animation: flow-dashed 2.1s linear infinite; }
   <div class="container inner">
     <a class="brand" id="brand" href="/"><span class="logo">SF</span><span class="name">Software Factory</span></a>
     <nav class="topnav" id="nav" aria-label="Views"></nav>
+    <div class="project-slot" id="project-slot"></div>
     <div class="status">
       <span class="live stale" id="live"><span class="live-dot"></span><span id="live-text">Loading</span></span>
       <span class="readonly" title="This map never changes the repository or the factory directory">Read-only view</span>
@@ -534,9 +577,11 @@ let etag = null;
 let lastChange = null;
 let route = parseRoute(locationRoute());
 let layout = null;
+// Every project the server found, from /api/projects. Empty in a snapshot.
+let projects = [];
 
-// View state that outlives a re-render: filters, open gate cards, the map's camera.
-const ui = { filters: {}, open: {}, camera: { x: 0, y: 0, k: 1 }, fitted: true, search: "" };
+// View state that outlives a re-render: filters, open gate cards and dropdowns, the map's camera.
+const ui = { filters: {}, open: {}, dropdowns: {}, camera: { x: 0, y: 0, k: 1 }, fitted: true, search: "" };
 
 /* ---------------- routing ---------------- */
 
@@ -572,12 +617,19 @@ function requestedTask() {
   return route.params.get("task");
 }
 
+// The project the address asks for; without one the server shows its default.
+function requestedProject() { return route.params.get("project"); }
+
+function inProject(path, extra) {
+  return href(path, Object.assign({ project: requestedProject() }, extra || {}));
+}
+
 function withTask(path, extra) {
-  return href(path, Object.assign({ task: requestedTask() }, extra || {}));
+  return inProject(path, Object.assign({ task: requestedTask() }, extra || {}));
 }
 
 function stageHref(id) { return withTask("/stages/" + encodeURIComponent(id)); }
-function taskHref(id) { return href("/tasks/" + encodeURIComponent(id)); }
+function taskHref(id) { return inProject("/tasks/" + encodeURIComponent(id)); }
 
 /* ---------------- small helpers ---------------- */
 
@@ -648,7 +700,7 @@ function progressBar(index) {
 
 // The bar is drawn empty and filled a frame later, so it grows rather than appears.
 function fillProgress() {
-  document.querySelectorAll(".progress").forEach((bar) => {
+  document.querySelectorAll(".progress[data-percent]").forEach((bar) => {
     const percent = bar.dataset.percent + "%";
     requestAnimationFrame(() => {
       bar.querySelector(".progress-fill").style.width = percent;
@@ -676,9 +728,141 @@ const NAV = [
 function renderNav() {
   el("brand").setAttribute("href", withTask("/"));
   el("nav").innerHTML = NAV.map(([page, path, label]) => {
-    const target = page === "tasks" ? href(path) : withTask(path);
+    const target = page === "tasks" ? inProject(path) : withTask(path);
     return `<a href="${esc(target)}" class="${route.page === page ? "active" : ""}">${label}</a>`;
   }).join("");
+  // The map carries the project picker in its sidebar; every other view in the top bar.
+  el("project-slot").innerHTML = state && route.page !== "map" ? projectPicker("project-top", true) : "";
+}
+
+/* ---------------- projects and planned tasks ---------------- */
+
+// The project being shown. Before /api/projects answers, and in a snapshot,
+// it is described from the state alone.
+function currentProject() {
+  const slug = requestedProject();
+  const found = projects.find((project) => (slug ? project.slug === slug : project.default));
+  if (found) return found;
+  const run = state.views.run;
+  return {
+    slug: slug || "",
+    name: run.project_name || fileName(state.factory.path.replace(/\/\.factory$/, "")),
+    project_id: run.project_id,
+    path: state.factory.path,
+    present: state.factory.present,
+    tasks_total: state.task_index.length,
+    tasks_done: state.task_index.filter((entry) => entry.done).length,
+    default: true,
+  };
+}
+
+// The same view in another project. A task page has no meaning there, so it becomes the task list.
+function projectHref(project) {
+  const params = { project: project.default ? null : project.slug };
+  if (route.page === "stages" && route.name) return href("/stages/" + encodeURIComponent(route.name), params);
+  if (route.page === "repository") return href("/repository", Object.assign(params, { view: route.params.get("view") }));
+  return href({ tasks: "/tasks", stages: "/stages" }[route.page] || "/", params);
+}
+
+function projectCard(project, on, asLink) {
+  const percent = project.tasks_total ? Math.round((project.tasks_done / project.tasks_total) * 100) : 0;
+  const tag = asLink ? "a" : "span";
+  const target = asLink ? ` href="${esc(projectHref(project))}"` : "";
+  return `<${tag} class="pick-card${on ? " on" : ""}"${target} title="${esc(project.path)}">
+      <span class="pick-name">${esc(project.name)}</span>
+      <span class="pick-meta">${esc(project.project_id || "no project ID")} · ${project.tasks_done} / ${project.tasks_total} tasks done${project.present ? "" : " · no factory yet"}</span>
+      <span class="pick-bar"><i style="width:${percent}%"></i></span>
+    </${tag}>`;
+}
+
+function projectPicker(key, popover) {
+  const current = currentProject();
+  let body = projects.map((project) => projectCard(project, project.slug === current.slug, true)).join("");
+  if (projects.length <= 1) {
+    body += `<div class="note">${SNAPSHOT
+      ? "A snapshot holds one project."
+      : "Only one project found. Every <code>.factory</code> folder next to this repository is listed as a project."}</div>`;
+  }
+  return dropdown(key, projectCard(current, false, false), body, false, popover);
+}
+
+// Whether a task is done, has started (it has a run directory), or is only planned.
+function taskStatus(entry) {
+  if (entry.done) return { key: "done", label: "done", tone: "good" };
+  if (state.tasks.includes(entry.task_id)) return { key: "progress", label: "in progress", tone: "current" };
+  return { key: "planned", label: "not started", tone: "muted" };
+}
+
+function taskCard(entry, asLink) {
+  const status = taskStatus(entry);
+  const on = entry.task_id === state.selected_task;
+  const steps = on && asLink && state.mode === "run"
+    ? `<span class="task-steps" style="grid-template-columns:repeat(${state.nodes.length},1fr)">` +
+      state.nodes.map((n) => `<i class="${RUN_TONE[n.run.status] || ""}" title="${esc(n.id)}: ${esc(human(n.run.status))}"></i>`).join("") +
+      `</span>`
+    : "";
+  const tag = asLink ? "a" : "span";
+  const target = asLink ? ` href="${esc(inProject("/", { task: entry.task_id }))}"` : "";
+  return `<${tag} class="task-card${on && asLink ? " on" : ""}"${target}>
+      <span class="task-name">${taskMark(entry)}${esc(entry.task_id)}${badge(status.label, status.tone)}</span>
+      <span class="task-meta">${esc(entry.title || "not in the plan: started directly")}</span>${steps}
+    </${tag}>`;
+}
+
+function tasksDropdown() {
+  const index = state.task_index;
+  const selected = index.find((entry) => entry.task_id === state.selected_task);
+  const summary = selected
+    ? taskCard(selected, false)
+    : `<span class="task-meta">${index.length ? "No task selected" : "No planned tasks"}</span>`;
+  const body = index.length
+    ? `<div class="task-cards">${index.map((entry) => taskCard(entry, true)).join("")}</div>`
+    : `<div class="note">${state.factory.present
+      ? "Nothing planned yet. Tasks come from <code>backlog.json</code> and from run directories under <code>.factory/tasks/</code>."
+      : "No factory directory, so no run is in progress. Every status on the map is build status derived from the repository."}</div>`;
+  return dropdown("tasks", summary, body, true, false);
+}
+
+function dropdown(key, summary, body, openByDefault, popover) {
+  const open = dropdownOpen(key, openByDefault, popover);
+  return `<div class="dropdown${popover ? " popover" : ""}${open ? " open" : ""}" data-dropdown="${esc(key)}">
+      <button type="button" class="dropdown-button" aria-expanded="${open}" aria-controls="dropdown-${esc(key)}">
+        <span class="dropdown-summary">${summary}</span><span class="caret" aria-hidden="true">▾</span>
+      </button>
+      <div class="dropdown-panel" id="dropdown-${esc(key)}"${open ? "" : " hidden"}>${body}</div>
+    </div>`;
+}
+
+// A sidebar dropdown remembers whether it was open; a popover always starts closed.
+function dropdownOpen(key, openByDefault, popover) {
+  if (ui.dropdowns[key] !== undefined) return ui.dropdowns[key];
+  if (popover) return false;
+  const saved = storageGet("factory-map-dropdown-" + key);
+  return saved === null ? openByDefault : saved === "open";
+}
+
+function setDropdown(box, open) {
+  box.classList.toggle("open", open);
+  box.querySelector(".dropdown-button").setAttribute("aria-expanded", String(open));
+  box.querySelector(".dropdown-panel").hidden = !open;
+  ui.dropdowns[box.dataset.dropdown] = open;
+  if (!box.classList.contains("popover")) storageSet("factory-map-dropdown-" + box.dataset.dropdown, open ? "open" : "closed");
+}
+
+function wireDropdowns() {
+  document.querySelectorAll("[data-dropdown]").forEach((box) => {
+    box.querySelector(".dropdown-button").addEventListener("click", () => setDropdown(box, !box.classList.contains("open")));
+  });
+}
+
+function closePopovers(except) {
+  let closed = false;
+  document.querySelectorAll(".dropdown.popover.open").forEach((box) => {
+    if (except && box.contains(except)) return;
+    setDropdown(box, false);
+    closed = true;
+  });
+  return closed;
 }
 
 function renderLive(changed) {
@@ -727,6 +911,7 @@ function renderPage() {
   document.title = title + " · Factory Map";
 
   restoreControls();
+  wireDropdowns();
   fillProgress();
   if (focusId && el(focusId)) {
     el(focusId).focus();
@@ -737,7 +922,7 @@ function renderPage() {
 function notFound() {
   el("main").innerHTML = `<div class="empty"><h1>No such page</h1>
     <p>This address is not one of the map's views.</p>
-    <p><a class="button" href="${esc(href("/"))}">Open the map</a></p></div>`;
+    <p><a class="button" href="${esc(inProject("/"))}">Open the map</a></p></div>`;
   return "Not found";
 }
 
@@ -810,27 +995,13 @@ function mapSubtitle() {
 function sidebar() {
   const run = state.views.run;
   const selected = state.selected_task;
-  const done = state.task_index.filter((t) => t.done).length;
-  let html = `<span class="side-label">Tasks${state.task_index.length ? ` · ${done} done` : ""}</span>`;
-
-  if (state.task_index.length) {
-    html += `<div class="task-cards">` + state.task_index.map((entry) => {
-      const on = entry.task_id === selected;
-      const steps = on && state.mode === "run"
-        ? `<span class="task-steps" style="grid-template-columns:repeat(${state.nodes.length},1fr)">` +
-          state.nodes.map((n) => `<i class="${RUN_TONE[n.run.status] || ""}" title="${esc(n.id)}: ${esc(human(n.run.status))}"></i>`).join("") +
-          `</span>`
-        : "";
-      return `<a class="task-card${on ? " on" : ""}" href="${esc(href("/", { task: entry.task_id }))}">
-          <span class="task-name">${taskMark(entry)}${esc(entry.task_id)}</span>
-          <span class="task-meta">${esc(entry.title || "untitled")} · ${entry.done ? "done" : "not done"}</span>${steps}
-        </a>`;
-    }).join("") + `</div>`;
-  } else {
-    html += `<div class="note">${state.factory.present
-      ? "No tasks yet. A task is a directory under <code>.factory/tasks/</code>."
-      : "No factory directory, so no run is in progress. Every status on the map is build status derived from the repository."}</div>`;
-  }
+  const counts = { done: 0, progress: 0, planned: 0 };
+  state.task_index.forEach((entry) => { counts[taskStatus(entry).key] += 1; });
+  let html = `<span class="side-label">Project${projects.length > 1 ? ` · ${projects.length} found` : ""}</span>`;
+  html += projectPicker("project-side", false);
+  html += `<span class="side-label">Planned tasks${state.task_index.length
+    ? ` · ${counts.done} done · ${counts.progress} in progress · ${counts.planned} not started` : ""}</span>`;
+  html += tasksDropdown();
 
   html += `<span class="side-label">Run</span><table class="run"><tbody>` + [
     ["mode", esc(state.mode)],
@@ -845,7 +1016,7 @@ function sidebar() {
 
   html += `<span class="side-label">Views</span><nav class="views">` +
     (selected ? `<a href="${esc(taskHref(selected))}">${esc(selected)}</a>` : "") +
-    `<a href="${esc(href("/tasks"))}">Tasks</a>` +
+    `<a href="${esc(inProject("/tasks"))}">Tasks</a>` +
     `<a href="${esc(withTask("/stages"))}">Stages</a>` +
     `<a href="${esc(withTask("/repository", { view: "checkpoints" }))}">Gates</a>` +
     `<a href="${esc(withTask("/repository"))}">Repository</a></nav>`;
@@ -864,10 +1035,11 @@ function sidebar() {
 }
 
 function taskMark(entry) {
+  const status = taskStatus(entry);
   const reason = `${entry.evidence.file}: ${entry.evidence.value}`;
-  return entry.done
-    ? `<span class="mark done" role="img" aria-label="done" title="${esc(reason)}">✓</span>`
-    : `<span class="mark open" role="img" aria-label="not done" title="${esc(reason)}">○</span>`;
+  const glyph = { done: "✓", progress: "●", planned: "○" }[status.key];
+  const tone = { done: "done", progress: "started", planned: "planned" }[status.key];
+  return `<span class="mark ${tone}" role="img" aria-label="${status.label}" title="${esc(reason)}">${glyph}</span>`;
 }
 
 /* ---- map canvas ---- */
@@ -1284,6 +1456,7 @@ function stat(value, name) {
 function renderTasksPage() {
   const index = state.task_index;
   const done = index.filter((entry) => entry.done).length;
+  const started = index.filter((entry) => taskStatus(entry).key === "progress").length;
   const project = state.views.run;
   let html = `<div class="page-head"><div class="titles">
       <h1>Tasks</h1>
@@ -1301,7 +1474,7 @@ function renderTasksPage() {
   }
 
   html += `<div class="grid">
-      ${stat(index.length, "tasks")}${stat(done, "done")}${stat(index.length - done, "not done")}
+      ${stat(index.length, "tasks")}${stat(done, "done")}${stat(started, "in progress")}${stat(index.length - done - started, "not started")}
       ${stat(Math.round((done / index.length) * 100) + "%", "complete")}
     </div>
     <div class="card" style="margin-top:1rem">${progressBar(index)}</div>
@@ -1310,18 +1483,19 @@ function renderTasksPage() {
       <div class="filters">
         <input id="filter-tasks" data-filter="tasks-table" placeholder="Filter by ID or title" aria-label="Filter tasks">
         <select id="filter-tasks-status" data-filter="tasks-table" data-column="status" aria-label="Filter by status">
-          <option value="">Any status</option><option value="done">Done</option><option value="open">Not done</option>
+          <option value="">Any status</option><option value="done">Done</option>
+          <option value="progress">In progress</option><option value="planned">Not started</option>
         </select>
       </div>
       <div class="table-wrap"><table id="tasks-table">
         <thead><tr><th>Task</th><th>Title</th><th>Status</th><th>Evidence</th><th></th></tr></thead>
-        <tbody>${index.map((entry) => `<tr data-status="${entry.done ? "done" : "open"}">
+        <tbody>${index.map((entry) => `<tr data-status="${taskStatus(entry).key}">
           <td><a class="mono" href="${esc(taskHref(entry.task_id))}">${esc(entry.task_id)}</a>
             ${entry.task_id === state.selected_task ? badge("selected", "current") : ""}</td>
-          <td>${esc(entry.title || "—")}</td>
-          <td>${entry.done ? badge("done", "good") : badge("not done", "muted")}</td>
+          <td>${esc(entry.title || "not in the plan")}</td>
+          <td>${badge(taskStatus(entry).label, taskStatus(entry).tone)}</td>
           <td class="small muted-text"><code>${esc(entry.evidence.file)}</code> · ${esc(entry.evidence.value)}</td>
-          <td><a class="button small" href="${esc(href("/", { task: entry.task_id }))}">Map</a></td>
+          <td><a class="button small" href="${esc(inProject("/", { task: entry.task_id }))}">Map</a></td>
         </tr>`).join("")}</tbody>
       </table></div>
       <p class="small muted-text">A task is done when its completion report says <code>complete</code> with no inconsistencies.</p>
@@ -1335,14 +1509,14 @@ function renderTaskPage(taskId) {
   const run = state.views.run;
   const isRun = state.mode === "run" && state.selected_task === taskId;
   let html = `<div class="page-head"><div class="titles">
-      <div class="crumbs"><a href="${esc(href("/tasks"))}">Tasks</a> / ${esc(taskId)}</div>
+      <div class="crumbs"><a href="${esc(inProject("/tasks"))}">Tasks</a> / ${esc(taskId)}</div>
       <h1>${esc(entry && entry.title ? entry.title : taskId)}</h1>
       <div class="sub"><span class="mono">${esc(taskId)}</span>
         ${isRun ? ` · current stage <strong>${run.current_stage ? `<a href="${esc(stageHref(run.current_stage))}">${esc(run.current_stage)}</a>` : "—"}</strong>
         · gates ${run.gates_passed} / ${run.gates_total}` : ""}
-        ${entry ? " · " + (entry.done ? badge("done", "good") : badge("not done", "muted")) : ""}</div>
+        ${entry ? " · " + badge(taskStatus(entry).label, taskStatus(entry).tone) : ""}</div>
     </div>
-    <div class="actions"><a class="button" href="${esc(href("/", { task: taskId }))}">Open on the map</a></div></div>`;
+    <div class="actions"><a class="button" href="${esc(inProject("/", { task: taskId }))}">Open on the map</a></div></div>`;
   html += snapshotNotice(taskId);
 
   if (!isRun) {
@@ -1661,6 +1835,7 @@ function toggleHelp(force) {
 function setupKeys() {
   window.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
+      if (closePopovers()) return;
       if (!el("help").hidden) {
         toggleHelp(false);
       } else if (el("search") && !el("search").hidden) {
@@ -1686,6 +1861,7 @@ function setupKeys() {
     }
   });
   el("help").addEventListener("click", () => toggleHelp(false));
+  document.addEventListener("click", (event) => closePopovers(event.target));
   window.addEventListener("resize", () => { if (el("stage") && ui.fitted) fit(false); });
   if (SNAPSHOT) {
     window.addEventListener("hashchange", () => {
@@ -1698,17 +1874,27 @@ function setupKeys() {
 
 /* ---------------- loading ---------------- */
 
+async function loadProjects() {
+  const response = await fetch("/api/projects");
+  if (response.ok) projects = (await response.json()).projects;
+}
+
 async function load(force) {
-  const task = requestedTask();
-  const url = "/api/state" + (task ? "?task=" + encodeURIComponent(task) : "");
+  const query = new URLSearchParams();
+  if (requestedProject()) query.set("project", requestedProject());
+  if (requestedTask()) query.set("task", requestedTask());
+  const url = "/api/state" + (query.toString() ? "?" + query.toString() : "");
   const headers = etag && !force ? { "If-None-Match": etag } : {};
   const response = await fetch(url, { headers: headers });
   if (response.status === 304) return false;
+  if (!response.ok) throw new Error(`the server answered ${response.status}`);
   etag = response.headers.get("ETag");
   const next = await response.json();
   const first = state === null;
   const changed = first || next.fingerprint !== state.fingerprint;
   state = next;
+  // Task counts in the project cards move with the state, so refresh them together.
+  if (changed) await loadProjects().catch(() => {});
   if (changed || force) renderPage();
   renderLive(changed && !first);
   return changed;
